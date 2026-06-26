@@ -546,8 +546,24 @@ for all configuration parameters.</p>
 
 <h4 id="voyageai-contextualized-embeddings">Contextualized chunk embeddings</h4>
 <p>To use <a href="https://docs.voyageai.com/docs/contextualized-chunk-embeddings">contextualized chunk embeddings</a>,
-configure the VoyageAI embedder with a <code>voyage-context-*</code> model and use it to embed an
+configure the VoyageAI embedder with a <code>voyage-context-*</code> model — such as
+<code>voyage-context-4</code> — and use it to embed an
 <code>array&lt;string&gt;</code> field containing your document chunks:</p>
+
+<pre>{% highlight xml %}
+<container version="1.0">
+    <component id="voyage" type="voyage-ai-embedder">
+        <model>voyage-context-4</model>
+        <api-key-secret-ref>voyage_api_key</api-key-secret-ref>
+        <dimensions>1024</dimensions>
+    </component>
+</container>
+{% endhighlight %}</pre>
+
+<p><code>voyage-context-4</code> outputs <code>1024</code> dimensions by default and also supports
+<code>256</code>, <code>512</code>, and <code>2048</code> via the <code>dimensions</code> parameter.
+The contextualized model is configured exactly like other VoyageAI models — embed an
+<code>array&lt;string&gt;</code> field so that all chunks from a document are sent together:</p>
 
 <pre>
 schema doc {
