@@ -438,26 +438,26 @@ docs:
         sub:
           - page: Introduction
             url: /en/operations/kubernetes/vespa-on-kubernetes.html
-          - page: Architecture
-            url: /en/operations/kubernetes/architecture.html
-          - title: Deployment
-            sub:
-              - page: Installation
-                url: /en/operations/kubernetes/deployment/installation.html
-              - page: Permissions
-                url: /en/operations/kubernetes/deployment/permissions.html
           - title: Operations
             sub:
-              - page: Operations
-                url: /en/operations/kubernetes/operations/operations.html
-              - page: Upgrade Vespa on Kubernetes
+              - page: Overview
+                url: /en/operations/kubernetes/operations/index.html
+              - page: Installation
+                url: /en/operations/kubernetes/operations/installation.html
+              - page: Permissions
+                url: /en/operations/kubernetes/operations/permissions.html
+              - page: Pod Lifecycle
+                url: /en/operations/kubernetes/operations/pod-lifecycle.html
+              - page: Production Serving
+                url: /en/operations/kubernetes/operations/production-serving.html
+              - page: Vespa Upgrades
                 url: /en/operations/kubernetes/operations/upgrades.html
-              - page: Monitor a Vespa on Kubernetes Deployment
-                url: /en/operations/kubernetes/operations/monitoring.html
               - page: Resource Scaling
                 url: /en/operations/kubernetes/operations/resource-scaling.html
           - title: Configuration
             sub:
+              - page: Overview
+                url: /en/operations/kubernetes/configuration/index.html
               - page: Configure Local Storage Type
                 url: /en/operations/kubernetes/configuration/configure-local-storage-type.html
               - page: Configure Log Collections
@@ -466,8 +466,18 @@ docs:
                 url: /en/operations/kubernetes/configuration/ingress.html
               - page: Configure Custom Overrides
                 url: /en/operations/kubernetes/configuration/custom-overrides-podtemplate.html
-              - page: Enable TLS Encryption
+              - page: Configure TLS Encryption with CertManager
                 url: /en/operations/kubernetes/configuration/tls.html
+              - page: Configure Monitoring
+                url: /en/operations/kubernetes/configuration/monitoring.html
+          - title: Reference
+            sub:
+              - page: Overview
+                url: /en/operations/kubernetes/reference/index.html
+              - page: VespaSet CRD
+                url: /en/operations/kubernetes/reference/vespaset-crd.html
+              - page: Helm Chart Reference
+                url: /en/operations/kubernetes/reference/helm-chart.html
 
   - title: Security
     documents:
