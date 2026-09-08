@@ -479,13 +479,13 @@ Add the secret to the container <code>&lt;secrets&gt;</code> and refer to it in 
 
 
 {% include chip-cloud.html %}
-<h2 id="voyageai-embedder">VoyageAI Embedder</h2>
+<h2 id="voyageai-embedder">VoyageAI by MongoDB Embedder</h2>
 <p>
-  An embedder that uses the <a href="https://www.voyageai.com/">VoyageAI</a> API
+  An embedder that uses the <a href="https://www.voyageai.com/">VoyageAI by MongoDB</a> API
   to generate embeddings.
 </p>
 <p>
-  The VoyageAI embedder is configured in <a href="../applications/services/services.html">services.xml</a>,
+  The VoyageAI by MongoDB embedder is configured in <a href="../applications/services/services.html">services.xml</a>,
   within the <code>container</code> tag:
 </p>
 <pre>{% highlight xml %}
@@ -501,7 +501,7 @@ Add the secret to the container <code>&lt;secrets&gt;</code> and refer to it in 
 </container>
 {% endhighlight %}</pre>
 
-<h3 id="voyageai-embedder-reference-config">VoyageAI embedder reference config</h3>
+<h3 id="voyageai-embedder-reference-config">VoyageAI by MongoDB embedder reference config</h3>
 <table class="table">
   <thead>
     <tr>
@@ -516,7 +516,7 @@ Add the secret to the container <code>&lt;secrets&gt;</code> and refer to it in 
     <tr>
       <td>model</td>
       <td>One</td>
-      <td><strong>Required</strong>. The VoyageAI model to use. See the <a href="https://docs.voyageai.com/docs/embeddings">VoyageAI embeddings documentation</a> for the complete list of available models including general-purpose, specialized, <a href="https://docs.voyageai.com/docs/contextualized-chunk-embeddings">contextualized</a>, and <a href="https://docs.voyageai.com/docs/multimodal-embeddings">multimodal</a> models.
+      <td><strong>Required</strong>. The VoyageAI by MongoDB model to use. See the <a href="https://docs.voyageai.com/docs/embeddings">VoyageAI by MongoDB embeddings documentation</a> for the complete list of available models including general-purpose, specialized, <a href="https://docs.voyageai.com/docs/contextualized-chunk-embeddings">contextualized</a>, and <a href="https://docs.voyageai.com/docs/multimodal-embeddings">multimodal</a> models.
       </td>
       <td>string</td>
       <td>N/A</td>
@@ -524,21 +524,21 @@ Add the secret to the container <code>&lt;secrets&gt;</code> and refer to it in 
     <tr>
       <td>dimensions</td>
       <td>One</td>
-      <td><strong>Required</strong>. The number of dimensions for the output embedding vectors. Must match the tensor field definition in your schema. Valid values are <code>256</code>, <code>512</code>, <code>1024</code>, <code>1536</code>, or <code>2048</code>. See the <a href="https://docs.voyageai.com/docs/embeddings">VoyageAI embeddings documentation</a> for model-specific dimension support.</td>
+      <td><strong>Required</strong>. The number of dimensions for the output embedding vectors. Must match the tensor field definition in your schema. Valid values are <code>256</code>, <code>512</code>, <code>1024</code>, <code>1536</code>, or <code>2048</code>. See the <a href="https://docs.voyageai.com/docs/embeddings">VoyageAI by MongoDB embeddings documentation</a> for model-specific dimension support.</td>
       <td>integer</td>
       <td>N/A</td>
     </tr>
     <tr>
       <td>api-key-secret-ref</td>
       <td>One</td>
-      <td><strong>Required</strong>. Reference to the secret in Vespa's <a href="/en/cloud/security/secret-store.html">secret store</a> containing the VoyageAI API key.</td>
+      <td><strong>Required</strong>. Reference to the secret in Vespa's <a href="/en/cloud/security/secret-store.html">secret store</a> containing the VoyageAI by MongoDB API key.</td>
       <td>string</td>
       <td>N/A</td>
     </tr>
     <tr>
       <td>endpoint</td>
       <td>Optional</td>
-      <td>VoyageAI API endpoint URL.</td>
+      <td>VoyageAI by MongoDB API endpoint URL.</td>
       <td>string</td>
       <td>https://api.voyageai.com/v1/embeddings</td>
     </tr>
@@ -558,7 +558,7 @@ Add the secret to the container <code>&lt;secrets&gt;</code> and refer to it in 
         The <code>float</code> value also applies to <code>bfloat16</code> destination tensors.
         When using <code>binary</code> quantization, the destination tensor field must use <code>int8</code> cell type
         with 1/8 of the dimensions specified in the embedder configuration (e.g., 1024 dimensions → <code>tensor&lt;int8&gt;(x[128])</code>).
-        See the <a href="https://docs.voyageai.com/docs/flexible-dimensions-and-quantization#quantization">VoyageAI quantization documentation</a>
+        See the <a href="https://docs.voyageai.com/docs/flexible-dimensions-and-quantization#quantization">VoyageAI by MongoDB quantization documentation</a>
         for details on quantization options and <a href="../../rag/binarizing-vectors.html">binarizing vectors</a> for more on binary quantization in Vespa.</td>
       <td>string</td>
       <td>auto</td>
@@ -566,7 +566,7 @@ Add the secret to the container <code>&lt;secrets&gt;</code> and refer to it in 
     <tr>
       <td>batching</td>
       <td>Optional</td>
-      <td>Enables dynamic batching of concurrent embedding requests into single VoyageAI API calls.
+      <td>Enables dynamic batching of concurrent embedding requests into single VoyageAI by MongoDB API calls.
         When enabled, the embedder collects concurrent requests and sends them as a single batch,
         reducing the number of API calls and improving throughput.
         <ul>
@@ -748,7 +748,7 @@ Add the secret to the container <code>&lt;secrets&gt;</code> and refer to it in 
       <td>Optional</td>
       <td>Output quantization format for embedding vectors. Valid values are <code>auto</code>, <code>float</code>,
         <code>int8</code>, or <code>binary</code>. See the <code>quantization</code> row of the
-        <a href="#voyageai-embedder-reference-config">VoyageAI embedder reference config</a>
+        <a href="#voyageai-embedder-reference-config">VoyageAI by MongoDB embedder reference config</a>
         for details on <code>auto</code> resolution and the destination tensor layout required for <code>int8</code>
         and <code>binary</code>. Note that not all Mistral models support <code>int8</code> and <code>binary</code>
         quantization — see the
