@@ -206,7 +206,8 @@ and before <code>&lt;prod&gt;</code>. It can be declared multiple times.
   <tr>
     <td>time-zone
     <td>No, default UTC
-    <td>The name of the time zone used to interpret the hours attribute.
+    <td>The name of the time zone used to interpret the hours attribute, with daylight saving
+        time (DST) transitions taken into account.
         Time zones are full names or short forms, when the latter is unambiguous.
         See
         <a href="https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html#of-java.lang.String-">ZoneId.of</a>
@@ -215,12 +216,14 @@ and before <code>&lt;prod&gt;</code>. It can be declared multiple times.
   <tr>
     <td>from-date
     <td>No
-    <td>The inclusive starting date of this block (ISO-8601, <code>YYYY-MM-DD</code>).
+    <td>The inclusive starting date of this block (ISO-8601, <code>YYYY-MM-DD</code>),
+        optionally followed by a time of day, <code>Thh:mm</code>.
   </tr>
   <tr>
     <td>to-date
     <td>No
-    <td>The inclusive ending date of this block (ISO-8601, <code>YYYY-MM-DD</code>).
+    <td>The inclusive ending date of this block (ISO-8601, <code>YYYY-MM-DD</code>),
+        optionally followed by a time of day, <code>Thh:mm</code>.
   </tr>
   </tbody>
 </table>
@@ -237,11 +240,24 @@ and before <code>&lt;prod&gt;</code>. It can be declared multiple times.
               hours="0-8,16-23"
               time-zone="America/Los_Angeles"/>
 {% endhighlight %}</pre>
+<p>
+  To block <em>only</em> maintenance operations, <code>revision</code> and <code>version</code>
+  must be explicitly set to <code>false</code>, since they default to <code>true</code>.
+  The below example blocks maintenance during working hours,
+  while still allowing application deployments and platform upgrades at any time:
+</p>
+<pre>{% highlight xml %}
+<block-change maintenance="true"
+              revision="false"
+              version="false"
+              hours="8-15"
+              time-zone="America/Los_Angeles"/>
+{% endhighlight %}</pre>
 <p>The below example blocks:</p>
   <ul>
     <li>all changes on Sundays starting on 2022-03-01</li>
     <li>all changes in the hours 16-23 between 2022-02-10 and 2022-02-15</li>
-    <li>all changes until 2022-01-05</li>
+    <li>all changes until 2022-01-05T20:20</li>
   </ul>
 <pre>{% highlight xml %}
 <block-change days="sun"
@@ -251,7 +267,7 @@ and before <code>&lt;prod&gt;</code>. It can be declared multiple times.
               from-date="2022-02-10"
               to-date="2022-02-15"
               time-zone="America/Los_Angeles"/>
-<block-change to-date="2022-01-05"
+<block-change to-date="2022-01-05T20:20"
               time-zone="America/Los_Angeles"/>
 {% endhighlight %}</pre>
 
@@ -263,6 +279,12 @@ In <code>&lt;deployment&gt;</code>, <strong>or</strong> <code>&lt;instance&gt;</
 Configures scheduled backups of production content clusters. When present, backups will
 be created at the specified frequency. Must be placed after any <code>&lt;test&gt;</code> and <code>&lt;staging&gt;</code> tags,
 and before <code>&lt;prod&gt;</code>.
+</p>
+<p>
+Note that the first backup is not created immediately when this element is added. A cluster becomes
+eligible for its first backup only once a content node has been running for at least one full
+<code>frequency</code> interval; subsequent backups then follow at the configured frequency.
+See <a href="../../operations/data-management.html#backup">Automated Backups</a> for details.
 </p>
 <table class="table">
   <thead>
@@ -277,7 +299,7 @@ and before <code>&lt;prod&gt;</code>.
     <td>frequency</td>
     <td>Yes</td>
     <td>A positive integer with a suffix <code>h</code> (hours) or <code>d</code> (days),
-    e.g. <code>12h</code> or <code>7d</code>. Minimum 1h.</td>
+    e.g. <code>24h</code> or <code>7d</code>. Minimum 24h.</td>
   </tr>
   <tr>
     <td>granularity</td>
@@ -935,6 +957,9 @@ Specifies container settings for the tester application container, which is used
 system, staging and production verification tests.
 </p>
 <p>The allowed elements inside this are <a href="../applications/services/services.html#nodes"><code>&lt;nodes&gt;</code></a>.</p>
+<p>
+The tester always runs on a single node, so <code>count</code> must be <code>1</code>.
+</p>
 <pre>{% highlight xml %}
 <staging>
     <tester>

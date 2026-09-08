@@ -404,8 +404,6 @@ docs:
             url: /en/operations/self-managed/files-processes-and-ports.html
           - page: Node Setup
             url: /en/operations/self-managed/node-setup.html
-          - page: Using Kubernetes
-            url: /en/operations/self-managed/using-kubernetes-with-vespa.html
           - page: Build and install
             url: /en/operations/self-managed/build-install.html
           - page: Monitoring
@@ -446,12 +444,6 @@ docs:
             sub:
               - page: Installation
                 url: /en/operations/kubernetes/deployment/installation.html
-              - page: Minikube Setup
-                url: /en/operations/kubernetes/deployment/local-deployment.html
-              - page: Setup ECR Pull-through Cache
-                url: /en/operations/kubernetes/deployment/ecr-pull-through-cache.html
-              - page: Setup Dev Environment
-                url: /en/operations/kubernetes/deployment/dev-mode.html
               - page: Permissions
                 url: /en/operations/kubernetes/deployment/permissions.html
           - title: Operations
@@ -460,8 +452,6 @@ docs:
                 url: /en/operations/kubernetes/operations/operations.html
               - page: Upgrade Vespa on Kubernetes
                 url: /en/operations/kubernetes/operations/upgrades.html
-              - page: Delete a VespaSet
-                url: /en/operations/kubernetes/operations/delete-vespaset.html
               - page: Monitor a Vespa on Kubernetes Deployment
                 url: /en/operations/kubernetes/operations/monitoring.html
               - page: Resource Scaling
@@ -474,7 +464,7 @@ docs:
                 url: /en/operations/kubernetes/configuration/logging.html
               - page: Configure External Access Layer
                 url: /en/operations/kubernetes/configuration/ingress.html
-              - page: Provide Custom Overrides
+              - page: Configure Custom Overrides
                 url: /en/operations/kubernetes/configuration/custom-overrides-podtemplate.html
               - page: Enable TLS Encryption
                 url: /en/operations/kubernetes/configuration/tls.html
@@ -485,6 +475,8 @@ docs:
         url: /en/security/security.html
       - page: Security Guide
         url: /en/security/guide.html
+      - page: Host Images
+        url: /en/security/host-images.html
       - page: Secret Store
         url: /en/security/secret-store.html
       - page: Cloudflare Workers

@@ -244,8 +244,8 @@ The supported arithmetic operators are:
 <tr>
   <td><code>chunk id [args]</code></td>
   <td>String</td>
-  <td>A tensor</td>
-  <td><p id="chunk">Invokes a which convert a string into an array of strings.
+  <td>Array&lt;String&gt;</td>
+  <td><p id="chunk">Invokes a <code>Chunker</code> which converts a string into an array of strings.
       Arguments are given space separated, as in <code>chunk fixed-length 512</code>.
       The id of the chunker to use is required and can be a chunker bundled with Vespa,
       or any chunker component added in the services.xml, see the
@@ -455,6 +455,16 @@ The following are the unclassified expressions available:
       <p id="base64encode">
       If the execution value is a long integer, it is base-64 encoded to a string.
       If it is not a long integer, the execution value is set to <code>null</code>.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <td><code>documentid [part]</code></td>
+    <td>
+      <p id="documentid">
+        Exposes ID of the document being processed, or, given an optional
+        argument, a single structural part of it as a string.
+        Valid <code>part</code> values are: <code>namespace, documenttype, group, number, specific</code>
       </p>
     </td>
   </tr>

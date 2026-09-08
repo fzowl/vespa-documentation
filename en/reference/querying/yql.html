@@ -112,6 +112,20 @@ where range(fieldname, 0, 5000000000L)
 <pre>
 where (range(year, 2000, Infinity))
 </pre>
+    <p>
+      An all-encompassing range matches every document that has a value set for the field.
+      This is a way to select the documents where a numeric field is present:
+    </p>
+<pre>
+where range(size, -Infinity, Infinity)
+</pre>
+    <p>
+      Documents where the field is unset are not matched.
+      For the complementary query - finding documents <em>missing</em> a value - see
+      <a href="../../querying/grouping.html#count-fields-with-nan">count fields with NaN</a>
+      and the FAQ entry on
+      <a href="../../learn/faq.html#querying-for-fields-with-no-value">querying for fields with no value</a>.
+    </p>
     <table class="table">
       <thead>
       <tr>
@@ -286,9 +300,9 @@ where field contains near("sql", "database", !"nosql")
       </p>
       <p>
 	Features below <code>near()</code> and <code>onear()</code> are filtered based on the spans for the operator match before they are exposed to the ranking features. Given the query
-	<pre>text contains ({distance:1}near("a","b"))</pre>
-	and two documents.
       </p>
+	<pre>text contains ({distance:1}near("a","b"))</pre>
+      <p>and two documents.</p>
       <p>
 	The text field in the first document is	<code>"a a a a a a b b b b b b"</code>. The spans for the near match are <code>[[5,6]]</code>. Only the last occurrence of <code>"a"</code> and the first occurrence of <code>"b"</code> are kept.
       </p>
@@ -432,6 +446,28 @@ where my_numbers[2] = 42
       Use the <a href="#elementfilter"><code>elementFilter</code></a> annotation to match multiple indices.</p>
     </td>
   </tr>
+
+  <tr><th>alternatives</th>
+    <td>
+      <p id="alternatives">
+        The <code>alternatives</code> operator is used to provide multiple variants of a token at the same
+        position in the query. The token alternatives are given with a normalized exactness score denoting the extent to
+        which they mean "the same thing" as the first alternative.
+      </p>
+<pre>
+where fieldName contains alternatives({"sneakers":1.0, "shoes":0.7})
+</pre>
+    </td>
+    <p>
+      The query will match documents containing any of the alternatives given. The exactness score is reflected
+      in some rank features, such that it is possible to rank more exact matches over less exact ones.
+      Use 1.0 as the exactness of all alternatives if exactness information is not available or appropriate.
+    </p>
+    <p>
+      Prefer <code>alternatives</code> to equiv when the purpose is to express alternative forms of a single token.
+    </p>
+  </tr>
+<!-- ToDo: for later, link to some resource explaining where to use equiv and alternatives -->
 
   <tr><th>equiv</th><td>
     <p id="equiv">
@@ -731,6 +767,35 @@ where rank(a contains "A", b contains "B", c contains "C")
 <pre>
 where rank(nearestNeighbor(field, queryVector), a contains "A", b contains "B", c contains "C")
 </pre>
+    </td>
+  </tr>
+
+  <tr>
+    <th>labeled</th>
+    <td>
+      <p id="labeled">
+      Using <em>labeled(subQuery, "mylabel", 4.25)</em> wraps an arbitrary sub-query with a label
+      "mylabel" and score. If the sub-query matches a document, the score (4.25 in this example)
+      can be picked up by ranking expressions using the
+      <a href="../ranking/rank-features.html#itemRawScore(label)">itemRawScore</a>
+      rank feature.
+      Available since {% include version.html version="8.743.16" %}.
+      Typically used together with the <a href="#rank">rank</a> operator, like this:
+      </p>
+<pre>
+where rank(title contains "running shoes",
+           labeled(memberDiscountPercent >= 20 AND inStock > 0, "memberDiscount", 2.0),
+           labeled(premiumBrand = true OR todaysFeaturedBrand = true, "premiumOrFeaturedBrand", 1.0))
+</pre>
+      <p>And a ranking profile could use</p>
+<pre>
+  expression: bm25(title) + itemRawScore(memberDiscount) + 31.5 * itemRawScore(premiumOrFeaturedBrand)
+</pre>
+      <p>
+      This is similar to Lucene's <code>ConstantScoreQuery</code>,
+      often used in Elasticsearch/OpenSearch through
+      <code>function_score</code> or in Solr with <code>^=</code> query syntax.
+      </p>
     </td>
   </tr>
 
@@ -1565,11 +1630,25 @@ where title contains "madonna" order by price asc, releasedate desc
 where title contains "madonna" order by {function: "uca", locale: "en_US", strength: "IDENTICAL"}other desc, {function: "lowercase"}something
 </pre>
 {% include note.html content="<a href='../schemas/schemas.html#match-phase'>match-phase</a>
-is enabled when sorting - refer to the <a href='sorting-language.html'>sorting reference</a>."%}
+can be enabled automatically when sorting on attributes - refer to the <a href='sorting-language.html'>sorting reference</a>.
+This optimization is not activated when the primary sort key is <code>feature(...)</code>."%}
+<p>
+  To sort by a rank feature or rank-profile function, use <code>function: "feature"</code> on its name:
+</p>
+<pre>
+where title contains "madonna" order by {function: "feature"}title_bm25 desc, price asc
+</pre>
+<p>
+  The name must be listed in <a href="../schemas/schemas.html#sort-features">sort-features</a>
+  in the selected rank profile. See <a href="sorting-language.html#sorting-by-rank-feature">sorting by rank feature</a>
+  for the rank-profile definition and restrictions.
+</p>
 <p>
   The <a href="../../basics/ranking.html">rank profile</a> determines the rank score each document will get.
   Results are ordered by that value by default, but <code>order by</code> overrides that ordering.
-  Vespa does not optimize away the rank score computation in this case, it is still executed, even if the model score is thrown away. Use the built-in rank-profile <em>unranked</em> for optimal performance of sorting queries.
+  Use the built-in rank-profile <em>unranked</em> for queries that sort only by attributes.
+  Feature sorting keeps the selected profile, but does not itself activate first- or second-phase ranking.
+  Include <code>'[relevance]'</code> (or <code>'[rank]'</code>) to compute relevance scores and use them in sorting.
   </p>
   <p>
   To do a primary ordering on the rank score, and a secondary sort on an attribute, use <code>'[relevance]'</code> as the first order by attribute.
@@ -1927,6 +2006,18 @@ where myUrlField.hostname contains ({startAnchor: true}uri("vespa.ai"))
         </thead>
         <tbody>
         <tr>
+          <td><code>feature</code></td>
+          <td>
+            <p id="feature">
+              Sorts numerically by a scalar rank feature or rank-profile function without arguments,
+              listed in the selected profile's <a href="../schemas/schemas.html#sort-features">sort-features</a>.
+              The annotated name is the feature name, for example <code>{function: "feature"}title_bm25 desc</code>.
+              The default order is ascending.
+              See <a href="sorting-language.html#sorting-by-rank-feature">sorting by rank feature</a>.
+            </p>
+          </td>
+        </tr>
+        <tr>
           <td><code>uca</code></td>
           <td>
             <p id="uca">
@@ -2076,9 +2167,25 @@ where myUrlField.hostname contains ({startAnchor: true}uri("vespa.ai"))
     <td>string</td>
     <td>
       <p id="label">
-      Used by <a href="#geolocation">geoLocation</a>
-      and <a href="#nearestneighbor">nearestNeighbor</a>. <!-- ToDo: and probably others ... -->
-      Label for referring to this term/operator during ranking.
+      Attaches a symbolic name to this query item so that it can be referred to from ranking,
+      see <a href="../../ranking/multivalue-query-operators.html#raw-scores-and-query-item-labeling">
+      query item labeling</a>.
+      </p>
+      <p>
+      The label is carried by single terms, or operators like <a href="#and">and</a>, <a href="#or">or</a> or
+      <a href="#nearestneighbor">nearestNeighbor</a>. Sub-clauses inherit the label of their parent, but
+      can override it.
+      </p>
+      <p>
+      The rank features taking a label are
+      <a href="../ranking/rank-features.html#itemRawScore(label)">itemRawScore(<em>label</em>)</a>,
+      <a href="../ranking/rank-features.html#closeness(dimension,name)">closeness(label,<em>name</em>)</a>,
+      <a href="../ranking/rank-features.html#distance(dimension,name)">distance(label,<em>name</em>)</a>,
+      <a href="../ranking/rank-features.html#closest(name,label)">closest(<em>field</em>,<em>label</em>)</a> and
+      <a href="../ranking/rank-features.html#bm25">bm25(field: <em>field</em>, label: <em>label</em>)</a>.
+      In addition,
+      <a href="../ranking/rank-features.html#bm25_for_labels">bm25_for_labels(<em>field</em>)</a>
+      returns one bm25 score per label.
       </p>
     </td>
   </tr>
@@ -2263,6 +2370,19 @@ where myUrlField.hostname contains ({startAnchor: true}uri("vespa.ai"))
       and this parameter protects against that when totalTargetHits leads to some node with
       little content otherwise getting a low targetHits.
       </p>
+      <p>
+      Each content node resolves its per-node target hits as
+      <code>max(minTargetHits, ceil(totalTargetHits &times; share))</code>, where <code>share</code>
+      is the node's share of the active documents in the
+      <a href="../applications/services/content.html#group">group</a> serving the query - not across
+      the whole cluster, since a query is dispatched to a single group. A node that has just joined
+      the cluster, or is still receiving documents after a topology change, temporarily holds little
+      content and would get too few hits from <code>totalTargetHits</code> alone without this floor.
+      </p>
+      {% include note.html content="Setting minTargetHits higher than a node's expected share of
+      totalTargetHits makes minTargetHits the effective value, and totalTargetHits has no further
+      effect until it exceeds the floor. This is easy to hit when moving from a flat to a grouped
+      topology, since a group typically has fewer nodes than the full cluster."%}
     </td>
   </tr>
   <tr>

@@ -14,10 +14,10 @@
 # you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: Vespa. Big data. Real time. Open source.
-tagline: Vespa Documentation
+title: "Vespa Documentation"
+tagline: "Vespa: The AI search platform"
 description: >- # this means to ignore newlines until "baseurl:"
-  Vespa - the open big data serving platform
+  Vespa - the AI search platform
 # baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://docs.vespa.ai" # the base hostname & protocol for your site, e.g. http://example.com
 logo: /assets/logos/vespa-logo-green-rgb.svg
@@ -89,10 +89,6 @@ search:
     - url: https://ba97230a.b68a8c0d.z.vespa-app.cloud/
       indexes:
         - open_index.json
-    # vespacloud-docsearch | prod.aws-euc1-az1
-    - url: https://af1993cf.b68a8c0d.z.vespa-app.cloud/
-      indexes:
-        - open_index.json
     # vespacloud-docsearch | prod.aws-us-east-1
     - url: https://b42c9416.b68a8c0d.z.vespa-app.cloud/
       indexes:
@@ -109,6 +105,10 @@ search:
     # - url: https://ab1f72fd.b68a8c0d.z.vespa-app.cloud/
     #   indexes:
     #     - open_index.json
+    # vespacloud-docsearch.cloud-enclave | prod.aws-us-east-1
+    - url: https://ab1642f7.b68a8c0d.z.vespa-app.cloud/
+      indexes:
+        - open_index.json
 
 defaults:
   - scope:

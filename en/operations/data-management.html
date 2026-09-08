@@ -16,7 +16,8 @@ redirect_from:
   Depending on <a href="https://vespa.ai/pricing/">plan</a>, content clusters are automatically backed up when a
   <a href="../reference/applications/deployment.html#backup"><code>&lt;backup&gt;</code></a> element is specified in <em>deployment.xml</em>.
   Vespa Cloud manages the backup schedule, storage, and lifecycle with no external tooling required. Backups will run at the configured frequency
-  while also respecting any <a href="../reference/applications/deployment.html#block-change">block windows</a> defined for the instance.
+  while also respecting any <a href="../reference/applications/deployment.html#block-change">maintenance block windows</a>
+  (<code>&lt;block-change maintenance="true"&gt;</code>) defined for the instance.
 </p>
 <pre>{% highlight xml %}
 <instance id="default">
@@ -26,6 +27,14 @@ redirect_from:
     </prod>
 </instance>
 {% endhighlight %}</pre>
+<p>
+  The first backup of a cluster is not created immediately when backups are enabled. A cluster
+  becomes eligible for its first backup only once a content node has been running for at least one
+  full backup interval &mdash; for example, 7 days for a <code>7d</code> frequency, measured from when
+  the node was first allocated. Subsequent backups then follow at the configured frequency. Backup
+  eligibility is evaluated approximately once per hour, so the first backup may appear up to an hour
+  after the cluster becomes eligible.
+</p>
 <p>
   Backups are retained for three backup intervals (e.g. 21 days for a 7-day frequency).
   The most recent fully completed backup is always retained regardless of age.

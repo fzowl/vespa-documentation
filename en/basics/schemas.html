@@ -9,9 +9,11 @@ redirect_from:
 <p>This is an introduction to schemas in Vespa. You can find all the details in the
 <a href="../reference/schemas/schemas.html">schema reference</a>.</p>
 
-<p>A schema defines a type of data and what we want to compute over it.
-An application package can contain multiple schemas for different kinds of data.
-Each content cluster specified in services.xml refers to the schemas that should be stored an indexed
+<p>A schema defines a <a href="../schemas/documents.html">type of data</a>
+and what we want to compute over it.
+An application package can contain many schemas for different kinds of data.
+Each <a href="../learn/overview.html#content-clusters">content cluster</a> specified in services.xml
+refers to the schemas that should be stored an indexed
 in that cluster. Schemas can inherit other schemas to avoid repeating common content.</p>
 
 <p>Schemas are placed in files named the same as the schema, with the ending ".sd" (for schema definition),
@@ -142,6 +144,7 @@ completions and navigation - see <a href="../applications/ide-support.html">IDE 
 </ul>
 
 <p>You can find the details in <a href="../reference/schemas/schemas.html#modifying-schemas">modifying schemas</a>.</p>
+
 
 <br/>
 <h4>Next: <a href="writing.html">Writing</a></h4>
