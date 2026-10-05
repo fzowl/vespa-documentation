@@ -503,14 +503,14 @@ telling the splade embedder the name of the tensor dimension to use for the chun
 
 
 {% include chip-cloud.html %}
-<h3 id="voyageai-embedder">VoyageAI Embedder</h3>
+<h3 id="voyageai-embedder">VoyageAI by MongoDB Embedder</h3>
 
-<p>An embedder that uses the <a href="https://www.voyageai.com/">VoyageAI</a> embedding API
-to generate high-quality embeddings for semantic search. This embedder calls the VoyageAI API service
-and does not require local model files or ONNX inference. All embeddings returned by VoyageAI are normalized
+<p>An embedder that uses the <a href="https://www.voyageai.com/">VoyageAI by MongoDB</a> embedding API
+to generate high-quality embeddings for semantic search. This embedder calls the VoyageAI by MongoDB API service
+and does not require local model files or ONNX inference. All embeddings returned by VoyageAI by MongoDB are normalized
 to unit length, making them suitable for cosine similarity and
 <a href="../reference/schemas/schemas.html#prenormalized-angular">prenormalized-angular</a> distance metrics
-(see <a href="https://docs.voyageai.com/docs/faq#which-similarity-function-should-i-use">VoyageAI FAQ</a>).</p>
+(see <a href="https://docs.voyageai.com/docs/faq#which-similarity-function-should-i-use">VoyageAI by MongoDB FAQ</a>).</p>
 
 <pre>{% highlight xml %}
 <container version="1.0">
@@ -524,11 +524,11 @@ to unit length, making them suitable for cosine similarity and
 
 <ul>
     <li>
-        The <code>model</code> specifies which VoyageAI model to use.
+        The <code>model</code> specifies which VoyageAI by MongoDB model to use.
     </li>
     <li>
         The <code>api-key-secret-ref</code> references a secret in Vespa's
-        <a href="/en/cloud/security/secret-store.html">secret store</a> containing your VoyageAI API key.
+        <a href="/en/cloud/security/secret-store.html">secret store</a> containing your VoyageAI by MongoDB API key.
         This is required for authentication.
     </li>
 </ul>
@@ -536,17 +536,35 @@ to unit length, making them suitable for cosine similarity and
 <p>See the <a href="../reference/rag/embedding.html#voyageai-embedder-reference-config">reference</a>
 for all configuration parameters.</p>
 
-<h4 id="voyageai-embedder-models">VoyageAI embedder models</h4>
-<p>For the complete list of available models and their specifications, see:</p>
+<h4 id="voyageai-embedder-models">VoyageAI by MongoDB embedder models</h4>
+<p>The models currently available through the VoyageAI by MongoDB API are listed below.
+Dimensions marked <em>(default)</em> are used when <code>dimensions</code> is not set to another supported value.</p>
+<table class="table">
+    <thead>
+        <tr><th>Model</th><th>Context length</th><th>Dimensions</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>voyage-4-large</code></td><td>32,000</td><td>1024 (default), 256, 512, 2048</td><td>Best general-purpose and multilingual retrieval quality</td></tr>
+        <tr><td><code>voyage-4</code></td><td>32,000</td><td>1024 (default), 256, 512, 2048</td><td>General-purpose and multilingual retrieval</td></tr>
+        <tr><td><code>voyage-4-lite</code></td><td>32,000</td><td>1024 (default), 256, 512, 2048</td><td>Optimized for latency and cost</td></tr>
+        <tr><td><code>voyage-4-nano</code></td><td>32,000</td><td>1024 (default), 256, 512, 2048</td><td>Open-weight model; also available as ONNX for <a href="#voyageai-local-query-inference">local query inference</a></td></tr>
+        <tr><td><code>voyage-code-4</code></td><td>32,000</td><td>1024 (default), 256, 512, 2048</td><td>Optimized for code retrieval and coding agents</td></tr>
+        <tr><td><code>voyage-finance-2</code></td><td>32,000</td><td>1024</td><td>Optimized for finance retrieval and RAG</td></tr>
+        <tr><td><code>voyage-law-2</code></td><td>16,000</td><td>1024</td><td>Optimized for legal retrieval and RAG</td></tr>
+        <tr><td><code>voyage-context-4</code></td><td>120,000 (32,000 per chunk)</td><td>1024 (default), 256, 512, 2048</td><td><a href="#voyageai-contextualized-embeddings">Contextualized chunk embeddings</a></td></tr>
+        <tr><td><code>voyage-multimodal-3.5</code></td><td>32,000</td><td>1024 (default), 256, 512, 2048</td><td>Multimodal embeddings for interleaved text and images</td></tr>
+    </tbody>
+</table>
+<p>For full specifications and the authoritative, up-to-date list, see the VoyageAI by MongoDB documentation:</p>
 <ul>
-    <li><a href="https://docs.voyageai.com/docs/embeddings">VoyageAI Embeddings Documentation</a> - General-purpose and specialized models</li>
+    <li><a href="https://docs.voyageai.com/docs/embeddings">VoyageAI by MongoDB Embeddings Documentation</a> - General-purpose and specialized models</li>
     <li><a href="https://docs.voyageai.com/docs/contextualized-chunk-embeddings">Contextualized Chunk Embeddings</a> - Models for embedding document chunks with surrounding context. See <a href="../rag/working-with-chunks.html">Working with chunks</a>.</li>
     <li><a href="https://docs.voyageai.com/docs/multimodal-embeddings">Multimodal Embeddings</a> - Multimodal models for text, images, and video</li>
 </ul>
 
 <h4 id="voyageai-contextualized-embeddings">Contextualized chunk embeddings</h4>
 <p>To use <a href="https://docs.voyageai.com/docs/contextualized-chunk-embeddings">contextualized chunk embeddings</a>,
-configure the VoyageAI embedder with a <code>voyage-context-*</code> model and use it to embed an
+configure the VoyageAI by MongoDB embedder with a <code>voyage-context-*</code> model and use it to embed an
 <code>array&lt;string&gt;</code> field containing your document chunks:</p>
 
 <pre>
@@ -568,12 +586,44 @@ schema doc {
 <p>
     When embedding array fields with a contextualized chunk embedding model, Vespa sends all chunks from a document in a single API request,
     allowing Voyage to encode each chunk with context from the other chunks.
-    Be aware that the combined size of all chunks in a document must fit within the VoyageAI API's input token limit.
+    Be aware that the combined size of all chunks in a document must fit within the VoyageAI by MongoDB API's input token limit.
     See <a href="working-with-chunks.html">Working with chunks</a> for chunking strategies.
 </p>
 
+<p>
+    Internally this uses the VoyageAI by MongoDB
+    <a href="https://docs.voyageai.com/docs/contextualized-chunk-embeddings">contextualized_embed</a> API.
+    Per the official specification, its <code>inputs</code> parameter is typed
+    <code>Union[List[List[str]], List[str]]</code> — both input formats are supported:
+    a list of documents where each document is itself a list of chunk strings, or a single flat list
+    of chunk strings representing one document. Vespa sends the chunks of a single document as one such input.
+    The equivalent direct API call is:
+</p>
+<pre>{% highlight python %}
+import voyageai
+
+vo = voyageai.Client()
+
+# Format 1: List[List[str]] — a batch of documents, each a list of chunk strings
+result = vo.contextualized_embed(
+    inputs=[
+        ["chunk 1 of doc A", "chunk 2 of doc A"],
+        ["chunk 1 of doc B", "chunk 2 of doc B"],
+    ],
+    model="voyage-context-4",
+    input_type="document",
+)
+
+# Format 2: List[str] — a single document as a flat list of chunk strings
+result = vo.contextualized_embed(
+    inputs=["chunk 1", "chunk 2", "chunk 3"],
+    model="voyage-context-4",
+    input_type="document",
+)
+{% endhighlight %}</pre>
+
 <h4 id="voyageai-input-types">Input type detection</h4>
-<p>VoyageAI models distinguish between query and document embeddings for improved retrieval quality.
+<p>VoyageAI by MongoDB models distinguish between query and document embeddings for improved retrieval quality.
 The embedder automatically detects the context and sets the appropriate input type based on whether
 the embedding is performed during feed (indexing) or query processing in Vespa.</p>
 
@@ -676,7 +726,7 @@ can dramatically improve performance and reduce cost.
 See the blog post on <a href="https://blog.vespa.ai/gpu-accelerated-ml-inference-in-vespa-cloud/">GPU-accelerated ML inference in Vespa Cloud</a>.
 With GPU-accelerated instances, using fp16 models instead of fp32 can increase throughput by as much as 3x compared to fp32.</p>
 <p>For cloud embedders that call an external API
-(<a href="#voyageai-embedder">VoyageAI</a>, <a href="#openai-embedder">OpenAI</a>, <a href="#mistral-embedder">Mistral</a>),
+(<a href="#voyageai-embedder">VoyageAI by MongoDB</a>, <a href="#openai-embedder">OpenAI</a>, <a href="#mistral-embedder">Mistral</a>),
 throughput is bound by API latency and rate limits rather than local hardware.
 See <a href="#thread-pool-tuning">Thread pool tuning for cloud embedders</a> and
 <a href="#dynamic-batching">dynamic batching</a> for tuning guidance.</p>
@@ -849,7 +899,7 @@ schema doc {
 
 <p>In Vespa Cloud, it is general practice to configure separate container clusters for feed and search, so that
 bursty feed load cannot affect query latency. When using HTTP-based cloud embedders
-(<a href="#voyageai-embedder">VoyageAI</a>, <a href="#openai-embedder">OpenAI</a>, <a href="#mistral-embedder">Mistral</a>),
+(<a href="#voyageai-embedder">VoyageAI by MongoDB</a>, <a href="#openai-embedder">OpenAI</a>, <a href="#mistral-embedder">Mistral</a>),
 configure a separate embedder component in each cluster. This lets you pick different models and API keys per workload,
 and gives two additional benefits: <strong>cost optimization</strong> (via model variants) and
 <strong>rate limit isolation</strong>.</p>
@@ -893,7 +943,7 @@ and gives two additional benefits: <strong>cost optimization</strong> (via model
     you ensure that feeding bursts don't negatively impact search.</p>
 
 <h3 id="thread-pool-tuning">Thread pool tuning for cloud embedders</h3>
-<p>When using an HTTP-based cloud embedder (VoyageAI, OpenAI, Mistral), container feed throughput is primarily
+<p>When using an HTTP-based cloud embedder (VoyageAI by MongoDB, OpenAI, Mistral), container feed throughput is primarily
     limited by embedding API latency combined with the document processing thread pool size, not by CPU.
     Each document being fed blocks a thread while waiting for the embedding API response. To improve throughput,
     you likely have to increase the
@@ -916,7 +966,7 @@ and gives two additional benefits: <strong>cost optimization</strong> (via model
     requests-per-minute (RPM) limit rather than the tokens-per-minute (TPM) limit.
     Batching reduces RPM usage by combining requests; TPM usage is unaffected.</p>
 
-<p>Dynamic batching is supported by the <a href="#voyageai-embedder">VoyageAI</a>,
+<p>Dynamic batching is supported by the <a href="#voyageai-embedder">VoyageAI by MongoDB</a>,
     <a href="#openai-embedder">OpenAI</a>, and <a href="#mistral-embedder">Mistral</a> embedders.</p>
 
 <pre>{% highlight xml %}
