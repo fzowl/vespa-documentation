@@ -125,7 +125,7 @@ sort order uses the highest value. See the <a href="#missing">missing policies</
   This example assumes an indexed <code>title</code> field with
   <a href="../schemas/schemas.html#index">enable-bm25</a>, and numeric <code>year</code> and <code>price</code> attributes:
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 rank-profile sorting {
     function decade() {
         expression: floor(attribute(year) / 10)
@@ -142,7 +142,7 @@ rank-profile sorting {
         nativeRank
     }
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   Sort by decade ascending, then by BM25 score descending, then by price ascending:
 </p>
@@ -156,10 +156,10 @@ vespa query \
   The equivalent <a href="yql.html#order-by">YQL order by</a> clause uses the <code>function</code> annotation
   on each feature name:
 </p>
-<pre>
+<pre>{% highlight vespa-yql %}
 select * from sources * where title contains "alpha"
 order by {function: "feature"}decade asc, {function: "feature"}title_bm25 desc, price asc
-</pre>
+{% endhighlight %}</pre>
 <p>
   Set <code>ranking=sorting</code> for this query as well.
   Feature sort keys can appear at any level, mixed with attributes and

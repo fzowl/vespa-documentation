@@ -150,8 +150,6 @@ docs:
         url: /en/querying/query-language.html
       - page: Grouping and aggregation
         url: /en/querying/grouping.html
-      - page: Federation
-        url: /en/querying/federation.html
       - page: Query profiles
         url: /en/querying/query-profiles.html
       - page: An intro to vector search
@@ -172,8 +170,12 @@ docs:
         url: /en/querying/document-summaries.html
       - page: Result diversity
         url: /en/querying/result-diversity.html
+      - page: Federation
+        url: /en/querying/federation.html
       - page: Page templates
         url: /en/querying/page-templates.html
+      - page: Filter intersections
+        url: /en/querying/filter-intersections.html
 
   - title: Ranking and inference
     documents:
@@ -212,8 +214,10 @@ docs:
       - page: Stateless model evaluation
         url: /en/ranking/stateless-model-evaluation.html
 
-  - title: RAG and embedding
+  - title: Agents, RAG and embedding
     documents:
+      - page: Agent-ready schemas
+        url: /en/rag/agent-ready-schemas.html
       - page: RAG in Vespa
         url: /en/rag/rag.html
       - page: Working with chunks
@@ -392,6 +396,8 @@ docs:
             url: /en/operations/archive/archive-guide-aws.html
           - page: Archive Guide GCP
             url: /en/operations/archive/archive-guide-gcp.html
+          - page: Archive Guide Azure
+            url: /en/operations/archive/archive-guide-azure.html
       - page: Deleting applications
         url: /en/operations/deleting-applications.html
       - title: Self-managed
@@ -454,6 +460,8 @@ docs:
                 url: /en/operations/kubernetes/operations/upgrades.html
               - page: Resource Scaling
                 url: /en/operations/kubernetes/operations/resource-scaling.html
+              - page: Delete a VespaSet
+                url: /en/operations/kubernetes/operations/delete-vespaset.html
           - title: Configuration
             sub:
               - page: Overview
@@ -582,6 +590,8 @@ docs:
             url: /en/reference/applications/testing.html
           - page: System test (Java)
             url: /en/reference/applications/testing-java.html
+          - page: Production test
+            url: /en/reference/applications/testing-production.html
       - title: Schemas and documents
         sub:
           - page: Schemas
@@ -618,6 +628,8 @@ docs:
             url: /en/reference/querying/page-result-format.html
           - page: Page templates
             url: /en/reference/querying/page-templates.html
+          - page: Filter intersections
+            url: /en/reference/querying/filter-intersections.html
       - title: Ranking and inference
         sub:
           - page: Ranking expressions
@@ -638,7 +650,7 @@ docs:
             url: /en/reference/ranking/model-files.html
           - page: Constant tensors
             url: /en/reference/ranking/constant-tensor-json-format.html
-      - title: RAG and embedding
+      - title: Agents, RAG and embedding
         sub:
           - page: Chunking
             url: /en/reference/rag/chunking.html

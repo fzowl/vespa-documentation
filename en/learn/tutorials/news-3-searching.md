@@ -57,10 +57,12 @@ We'll start by looking at attribute-based sorting and grouping before moving on 
 
 We saw multiple examples of attributes in the `news.sd` schema, for instance:
 
-    field date type int {
-        indexing: summary | attribute
-        attribute: fast-search
-    }
+```vespa-schema-language
+field date type int {
+    indexing: summary | attribute
+    attribute: fast-search
+}
+```
 
 Note that this `date` field has been defined as an `int` here, and when
 feeding document, we convert the date to the format `YYYYMMDD`.
@@ -377,9 +379,11 @@ Finally, all numeric and [tensors](../../ranking/tensor-user-guide.html) fields 
 
 #### Combining index and attribute
 
-    field category type string {
-        indexing: summary | attribute | index
-    }
+```vespa-schema-language
+field category type string {
+    indexing: summary | attribute | index
+}
+```
 
 Combining both index and attribute for the same field is supported.
 In this case, we can sort and group on the category,
@@ -436,7 +440,7 @@ Note that rank profiles are defined outside the `document` block:
 
 <div class="pre-parent">
   <button class="d-icon d-duplicate pre-copy-button" onclick="copyPreContent(this)"></button>
-<pre data-test="file" data-path="news/my-app/schemas/news.sd">
+<pre data-test="file" data-path="news/my-app/schemas/news.sd">{% highlight vespa-schema-language %}
 schema news {
     document news {
         field news_id type string {
@@ -482,14 +486,14 @@ schema news {
 
     rank-profile popularity inherits default {
         function popularity() {
-            expression: if (attribute(impressions) &gt; 0, attribute(clicks) / attribute(impressions), 0)
+            expression: if (attribute(impressions) > 0, attribute(clicks) / attribute(impressions), 0)
         }
         first-phase {
             expression: nativeRank(title, abstract) + 10 * popularity
         }
     }
 }
-</pre>
+{% endhighlight %}</pre>
 </div>
 
 - `rank-profile popularity inherits default`

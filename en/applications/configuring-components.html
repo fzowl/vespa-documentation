@@ -52,9 +52,9 @@ myMessage  string  default=""
 <p>
   Generating config classes is done by the <em>bundle plugin</em>:
 </p>
-<pre>
+<pre>{% highlight console %}
 $ mvn generate-resources
-</pre>
+{% endhighlight %}</pre>
 <p>
   The generated the config classes are written to <code>target/generated-sources/vespa-configgen-plugin/</code>.
   In the above example, the config definition file was named <em>my-component.def</em>
@@ -73,7 +73,7 @@ $ mvn generate-resources
   <a href="dependency-injection.html">constructor injection</a>,
   which means that the component can declare the generated class as one of its constructor arguments:
 </p>
-<pre>
+<pre>{% highlight java %}
 package com.mydomain.mypackage;
 
 public class MyComponent {
@@ -87,23 +87,23 @@ public class MyComponent {
         message = config.myMessage();
     }
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   The Container will create and inject the config instance.
   To override the default values of the config,
   <a href="../reference/applications/config-files.html#generic-configuration-in-services-xml">specify</a>
   values in <code>src/main/application/services.xml</code>, like:
 </p>
-<pre>
-&lt;container version="1.0"&gt;
-    &lt;component id="com.mydomain.mypackage.MyComponent"&gt;
-        &lt;config name="com.mydomain.mypackage.my-component"&gt;
-            &lt;myCode&gt;132&lt;/myCode&gt;
-            &lt;myMessage&gt;Hello, World!&lt;/myMessage&gt;
-        &lt;/config&gt;
-    &lt;/component&gt;
-&lt;/container&gt;
-</pre>
+<pre>{% highlight xml %}
+<container version="1.0">
+    <component id="com.mydomain.mypackage.MyComponent">
+        <config name="com.mydomain.mypackage.my-component">
+            <myCode>132</myCode>
+            <myMessage>Hello, World!</myMessage>
+        </config>
+    </component>
+</container>
+{% endhighlight %}</pre>
 <p>
   and the deployed instance of <code>MyComponent</code> is constructed using a
   corresponding instance of <code>MyComponentConfig</code>.
@@ -117,7 +117,7 @@ The generated config class provides a builder API
 that makes it easy to create config objects for unit testing.
 Example that sets up a unit test for the <code>MyComponent</code> class from the example above:
 </p>
-<pre>
+<pre>{% highlight java %}
 import static com.mydomain.mypackage.MyComponentConfig.*;
 
 public class MyComponentTest {
@@ -129,10 +129,10 @@ public class MyComponentTest {
                                            .myMessage("Neighbour of the beast")
                                            .build();
         MyComponent component = new MyComponent(config);
-        &hellip;
+        // …
    }
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   The config class used here is simple &mdash; see a separate example of
   <a href="unit-testing.html#unit-testing-configurable-components">building a complex configuration object</a>.
@@ -180,19 +180,19 @@ myModel model
   The file must reside in the application package, and the path (relative to
   the application package root) must be given in the component's configuration in <code>services.xml</code>:
 </p>
-<pre>
-&lt;container version="1.0"&gt;
-    &lt;component id="com.mydomain.mypackage.MyComponent"&gt;
-        &lt;config name="com.mydomain.mypackage.my-component"&gt;
-            &lt;myFile&gt;my-files/my-file.txt&lt;/myFile&gt;
-            &lt;myUrl&gt;https://docs.vespa.ai/en/reference/query-api-reference.html&lt;/myUrl&gt;
-            &lt;myModel model-id="id-provided-by-Vespa-Cloud" url/path="as-above"/&gt;
-        &lt;/config&gt;
-    &lt;/component&gt;
-&lt;/container&gt;
-</pre>
+<pre>{% highlight xml %}
+<container version="1.0">
+    <component id="com.mydomain.mypackage.MyComponent">
+        <config name="com.mydomain.mypackage.my-component">
+            <myFile>my-files/my-file.txt</myFile>
+            <myUrl>https://docs.vespa.ai/en/reference/query-api-reference.html</myUrl>
+            <myModel model-id="id-provided-by-Vespa-Cloud" url="as-above"/> <!-- or path="as-above" -->
+        </config>
+    </component>
+</container>
+{% endhighlight %}</pre>
 <p>An example component that uses these files:</p>
-<pre>
+<pre>{% highlight java %}
 package com.mydomain.mypackage;
 import java.io.File;
 
@@ -206,7 +206,7 @@ public class MyComponent {
         modelFilePath            = config.myModel();
     }
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   The <code>myFile()</code> and <code>myModel()</code> getter returns a <code>java.nio.Path</code> object,
   while the <code>myUrl()</code> getter returns a <code>java.io.File</code> object.

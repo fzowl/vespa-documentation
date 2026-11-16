@@ -31,8 +31,7 @@ Examples are based on the
 [album-recommendation](https://github.com/vespa-engine/sample-apps/tree/master/album-recommendation) sample application.
 
 {% include note.html content='When done, it is easy to tear down resources in Vespa Cloud.
-E.g., _https://console.vespa-cloud.com/tenant/mytenant/application/myapp/prod/deploy_ or
-_https://console.vespa-cloud.com/tenant/mytenant/application/myapp/dev/instance/default_ to find a delete-link.
+E.g., delete an application from the _Danger Zone_ on its _Application Overview_ page in the console.
 Instances in `dev` environments are auto-expired ([details](environments.html)),
 so application cloning is a safe way to work with Vespa.
 Find more information in [deleting applications](deleting-applications).
@@ -102,7 +101,7 @@ Uploading application package ... done
 Success: Triggered deployment of . with run ID 1
 
 Use vespa status for deployment status, or follow this deployment at
-https://console.vespa-cloud.com/tenant/mytenant/application/myapp/dev/instance/default/job/dev-aws-us-east-1c/run/1
+https://console.vespa-cloud.com/tenant/mytenant/application/myapp/environment/dev/instance/default/job/dev-aws-us-east-1c/run/1
 </pre>
   </li>
   <li>
@@ -123,11 +122,11 @@ EOF
     vespa-documentation-search</a> as an example and add/replace <code>nodes</code> elements
     for <code>container</code> and <code>content</code> clusters.
     If in doubt, just add a small config to start with, and change later:
-<pre>
-&lt;nodes count="2"&gt;
-    &lt;resources vcpu="2" memory="8Gb" disk="10Gb" /&gt;
-&lt;/nodes&gt;
-</pre>
+<pre>{% highlight xml %}
+<nodes count="2">
+    <resources vcpu="2" memory="8Gb" disk="10Gb" />
+</nodes>
+{% endhighlight %}</pre>
     Deploy the application package:
 <pre>
 $ vespa prod deploy
@@ -136,7 +135,7 @@ $ vespa prod deploy
 <pre>
 Hint: See <a href="production-deployment.html">production deployment</a>
 Success: Deployed .
-See https://console.vespa-cloud.com/tenant/mytenant/application/myapp/prod/deployment for deployment progress
+See https://console.vespa-cloud.com/tenant/mytenant/application/myapp/environment/prod/deployment for deployment progress
 </pre>
     A proper deployment to a <code>prod</code> zone should have automated tests,
     read more in <a href="automated-deployments.html">automated deployments</a>
@@ -171,24 +170,11 @@ $ vespa fetch
 Downloading application package... done
 Success: Application package written to application.zip
 ```
-
-The application package can also be downloaded from the Vespa Cloud Console:
-<ul>
-  <li>
-    <p>
-      dev: Navigate to <em>https://console.vespa-cloud.com/tenant/mytenant/application/myapp/dev/instance/default</em>,
-      click <em>Application</em> to download:
-    </p>
-    <img src="/assets/img/app-download-dev.png" alt="Application package download from dev environment" />
-  </li>
-  <li>
-    <p>
-      prod: Navigate to <em>https://console.vespa-cloud.com/tenant/mytenant1/application/myapp/prod/deployment?tab=builds</em>
-      and select the version of the application to download:
-    </p>
-    <img src="/assets/img/app-download-prod.png" alt="Application package download from prod environment" />
-  </li>
-</ul>
+{% include note.html content='In `prod`, `vespa fetch` downloads the latest submitted build,
+which is not always the build running in a zone.
+For cloning, you usually want the submitted package of the build a zone runs, together with its test package.
+See [submitted and deployed packages](automated-deployments.html#submitted-and-deployed-packages)
+for where to find it in the console.' %}
 
 **Target setup:**
 

@@ -134,6 +134,52 @@ The complete syntax of this language is found in the
 
 
 
+<h3 id="rules-and-fields">Rules and fields</h3>
+<p>
+By default, rules that do not specify a field only apply to terms searching the default index:
+terms with no field, as with <code>userQuery()</code>,
+and terms searching a field or fieldset named <code>default</code>.
+In <code>where title contains "lotr"</code>, the term <em>lotr</em> searches the field <code>title</code>,
+so the rule <code>lotr -&gt; lord of the rings</code> does not apply.
+To apply a rule to a specific field or fieldset, write its name before the term, e.g. <code>title:lotr</code>.
+These names are called
+<a href="../reference/querying/semantic-rules.html#condition-label">labels</a> in the reference.
+The following rules rewrite <em>lotr</em> both in the default index and in <code>title</code>:
+</p>
+<pre>
+lotr -&gt; lord of the rings;
+title:lotr -&gt; title:"lord of the rings";  # Quote to put the whole phrase in title
+</pre>
+<table class="table">
+  <thead>
+    <tr><th>Query</th><th>Rewritten query</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>where default contains "lotr"</code>, or <code>userQuery()</code> with <code>query=lotr</code></td>
+        <td><code>lord of the rings</code></td></tr>
+    <tr><td><code>where title contains "lotr"</code></td>
+        <td><code>title:"lord of the rings"</code></td></tr>
+    <tr><td><code>where description contains "lotr"</code></td>
+        <td>not rewritten - add a rule for <code>description:lotr</code></td></tr>
+  </tbody>
+</table>
+<p>
+Produced terms also search the default index unless they specify a field.
+Without <code>title:</code> in front, the second rule would produce <em>lord of the rings</em>
+searching the default index, not <code>title</code>.
+</p><p>
+To apply a rule to several fields, list them in parentheses,
+and use <code>*</code> as the field of the produced terms to have them search the field that was matched:
+</p>
+<pre>
+(title, description):lotr -&gt; *:"lord of the rings";
+</pre>
+<p>
+This rewrites <code>title:lotr</code> to <code>title:"lord of the rings"</code>
+and <code>description:lotr</code> to <code>description:"lord of the rings"</code>.
+</p>
+
+
 <h2 id="rule-bases">Rule bases</h2>
 <p>
 A collection of rules used together are collected in a <em>rule base</em> -
@@ -187,7 +233,8 @@ If there are errors in the rule bases, they will not be updated,
 and the errors will be reported on the command line.
 </p><p>
 To trace what the rules are doing,
-add <a href="../reference/api/query.html#tracelevel.rules">tracelevel.rules=[number]</a> to the query.
+add <a href="../reference/api/query.html#trace.level">trace.level=1</a> and
+<a href="../reference/api/query.html#tracelevel.rules">tracelevel.rules=[number]</a> to the query.
 </p>
 
 
@@ -313,19 +360,19 @@ $ vespa-makefsa listofphrasestextfile phrasefsa
 Put the file on all container nodes, configure the location
 and <a href="../basics/applications.html">deploy</a>:
 </p>
-<pre>
-&lt;container id="default" version="1.0"&gt;
-    &lt;config name="container.qr-searchers"&gt;
-        &lt;com&gt;
-            &lt;yahoo&gt;
-                &lt;prelude&gt;
-                    &lt;querytransform&gt;
-                        &lt;PhrasingSearcher&gt;
-                            &lt;automatonfile&gt;<span class="pre-hilite">/path/phrasefsa</span>&lt;/automatonfile&gt;
-                        &lt;/PhrasingSearcher&gt;
-                    &lt;/querytransform&gt;
-                &lt;/prelude&gt;
-            &lt;/yahoo&gt;
-        &lt;/com&gt;
-    &lt;/config&gt;
-</pre>
+<pre>{% highlight xml %}
+<container id="default" version="1.0">
+    <config name="container.qr-searchers">
+        <com>
+            <yahoo>
+                <prelude>
+                    <querytransform>
+                        <PhrasingSearcher>
+                            <automatonfile><span class="pre-hilite">/path/phrasefsa</span></automatonfile>
+                        </PhrasingSearcher>
+                    </querytransform>
+                </prelude>
+            </yahoo>
+        </com>
+    </config>
+{% endhighlight %}</pre>

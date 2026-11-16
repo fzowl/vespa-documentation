@@ -72,24 +72,38 @@ Each entry in the array/map will be treated as a separate sub-document.
 The following syntax can be used when grouping on <em>map</em> attribute fields.
 </p>
 <p>Group on map keys:</p>
-<pre>all( group(mymap.key) each(output(count())) )</pre>
+<pre>{% highlight vespa-yql %}
+all( group(mymap.key) each(output(count())) )
+{% endhighlight %}</pre>
 <p>Group on map keys then on map values:</p>
-<pre>all( group(mymap.key) each( group(mymap.value) each(output(count())) ))</pre>
+<pre>{% highlight vespa-yql %}
+all( group(mymap.key) each( group(mymap.value) each(output(count())) ))
+{% endhighlight %}</pre>
 <p>Group on values for key <em>my_key</em>:</p>
-<pre>all( group(my_map{"my_key"}) each(output(count())) )</pre>
+<pre>{% highlight vespa-yql %}
+all( group(my_map{"my_key"}) each(output(count())) )
+{% endhighlight %}</pre>
 <p>Group on struct field <em>my_field</em> referenced in map element <em>my_key</em>:</p>
-<pre>all( group(my_map{"my_key"}.my_field) each(output(count())) )</pre>
+<pre>{% highlight vespa-yql %}
+all( group(my_map{"my_key"}.my_field) each(output(count())) )
+{% endhighlight %}</pre>
 <p>
 The key can either be specified directly (above) or indirectly via a key source attribute.
 The key is retrieved from the key source attribute for each document.
 Note that the key source attribute must be single-valued and have the same data type as the key type of the map:
 </p>
-<pre>all( group(my_map{attribute(my_key_source)}) each(output(count())) )</pre>
+<pre>{% highlight vespa-yql %}
+all( group(my_map{attribute(my_key_source)}) each(output(count())) )
+{% endhighlight %}</pre>
 <!-- ToDo add weightedset doc <strong>Note:</strong> This syntax is map-specific; it does NOT apply to weighted sets. -->
 <p>Group on array of integers field:</p>
-<pre>all( group(my_array) each(output(count())) )</pre>
+<pre>{% highlight vespa-yql %}
+all( group(my_array) each(output(count())) )
+{% endhighlight %}</pre>
 <p>Group on struct field <em>my_field</em> in the <em>my_array</em> array of structs:</p>
-<pre>all( group(my_array.my_field) each(output(count())) )</pre>
+<pre>{% highlight vespa-yql %}
+all( group(my_array.my_field) each(output(count())) )
+{% endhighlight %}</pre>
 
 <p>
 <a href="../schemas/schemas.html#tensor">Tensors</a> can not be used in grouping.
@@ -107,10 +121,18 @@ filter. The <code>filter</code> clause expects a filter <em>predicate</em>:</p>
   <li> <a href="#range-filter">range(min-limit, max-limit, input-expression</em>)</a></li>
   <li> <a href="#range-filter">range(min-limit, max-limit, input-expression</em>, bool, bool)</a></li>
   <li> <a href="#istrue-filter">istrue(input-expression)</a></li>
+  <li> <a href="#in-filter">in(input-expression, "string", "string", ...)</a></li>
   <li> <a href="#logical-predicates-filter">not <em>predicate</em></a></li>
   <li> <a href="#logical-predicates-filter"><em>predicate</em> and <em>predicate</em></a></li>
   <li> <a href="#logical-predicates-filter"><em>predicate</em> or  <em>predicate</em></a></li>
 </ul>
+
+<p>When the <code>group</code> expression refers to a multivalue attribute, such as a field
+in an array of struct, the filter is evaluated once per element, and attributes from the same
+struct referenced in the filter are read from the same element. See the
+<a href="../../querying/grouping.html#filtering-array-elements">array of struct example</a>.
+For a single-valued <code>group</code> expression, the filter is evaluated once per hit, and a
+multivalue attribute in the filter matches if any of its values does.</p>
 
 <h3 id="regex-filter">Regex filter</h3>
 
@@ -119,7 +141,9 @@ documents that match in the grouping. The input will usually be the
 same -expression as in the "group" clause.
 Example:</p>
 
-<pre>all( group(my_array) filter(regex("foo.*", my_array)) ...)</pre>
+<pre>{% highlight vespa-yql %}
+all( group(my_array) filter(regex("foo.*", my_array)) ...)
+{% endhighlight %}</pre>
 
 <p>Here only the values that start
 with a "foo" prefix in <em>my_array</em> are collected into groups, all others are ignored.
@@ -127,37 +151,64 @@ See also <a href="../../querying/grouping.html#structured-grouping">this example
 
 <p>Regex filtering works on the string representation of any field type. For example,
 you can also filter on boolean values using regex(true) and regex(false).</p>
+<p>The pattern can be passed as a query parameter instead of being written into the expression,
+see <a href="#parameter-substitution">parameter substitution</a>.</p>
 
 <h3 id="range-filter">Range filter</h3>
 
 <p>Use a <code>range</code> filter to match documents where a field value is between a lower and an upper bound. Example:
-<pre>all( group(some_field) filter(range(1990, 2012, year)) ...)</pre>
+<pre>{% highlight vespa-yql %}
+all( group(some_field) filter(range(1990, 2012, year)) ...)
+{% endhighlight %}</pre>
 Here, the lower bound is <em>inclusive</em> (year &ge; 1990) and the upper bound is <em>exclusive</em> (year &lt; 2012).
 Use optional bools at the end to control if the lower and upper bounds are inclusive, respectively.
 The first bool sets the lower bound inclusive, and the second sets the upper bound inclusive.
-<pre>all( group(some_field) filter(range(1990, 2012, year, true, true)) ...)</pre>
+<pre>{% highlight vespa-yql %}
+all( group(some_field) filter(range(1990, 2012, year, true, true)) ...)
+{% endhighlight %}</pre>
 Here, both lower and upper bounds are inclusive.</p>
 
 <h3 id="istrue-filter">IsTrue filter</h3>
 
 <p>Use <code>istrue</code> to filter using a boolean expression.
 The expression must evaluate to a boolean value, e.g. a boolean attribute. Example:
-<pre>all( group(some_field) filter(istrue(my_bool_attribute)) ...)</pre>
+<pre>{% highlight vespa-yql %}
+all( group(some_field) filter(istrue(my_bool_attribute)) ...)
+{% endhighlight %}</pre>
 Here, only documents where <em>my_bool_attribute</em> evaluates to true are included in the grouping.</p>
+
+<h3 id="in-filter">In filter</h3>
+
+<p>Available since {% include version.html version="8.757.45" %}.</p>
+<p>Use <code>in</code> to allow only the hits where the input is equal to one of the given strings.
+The input expression is followed by one or more string constants. Example:
+<pre>{% highlight vespa-yql %}
+all( group(some_field) filter(in(category, "foo", "bar")) ...)
+{% endhighlight %}</pre>
+Here, only hits where <em>category</em> is "foo" or "bar" are included in the grouping.
+If <em>category</em> is a multivalue field, a hit is allowed if at least one of its values is equal to one of the strings.
+Unlike <a href="#regex-filter">regex</a>, the match is an exact comparison of the whole value,
+so "foo" does not match "foobar". Only string values are supported.</p>
 
 <h3 id="logical-predicates-filter">Logical predicates</h3>
 <p>
  Use <code>not</code> to negate another filter expression. It takes a single
  sub-filter and matches when the sub-filter does not. Example:
-<pre>all( group(my_field) filter( not regex("bar.*", my_other_field)) ...)</pre>
+<pre>{% highlight vespa-yql %}
+all( group(my_field) filter( not regex("bar.*", my_other_field)) ...)
+{% endhighlight %}</pre>
 Use <code>or</code> to perform a logical disjunction across two
 sub-filters. The combined filter matches if any of the sub-filters evaluate to
 true. Example:
-<pre>all( group(my_field) filter( regex("bar.*", my_field) or regex("baz.*", my_third_field) ) ...)</pre>
+<pre>{% highlight vespa-yql %}
+all( group(my_field) filter( regex("bar.*", my_field) or regex("baz.*", my_third_field) ) ...)
+{% endhighlight %}</pre>
 Use <code>and</code> to perform a logical conjunction across two
 sub-filters. The combined filter matches only if all of the sub-filters evaluate
 to true. Example:
-<pre>all( group(my_field) filter( regex("bar.*", my_other_field) and regex("baz.*", my_third_field) ) ...)</pre>
+<pre>{% highlight vespa-yql %}
+all( group(my_field) filter( regex("bar.*", my_other_field) and regex("baz.*", my_third_field) ) ...)
+{% endhighlight %}</pre>
 These logical predicates can be nested to create complex filter conditions.
 Filter expressions follow <em>conventional precedence</em>
 rules: <code>not</code> is evaluated before <code>and</code>,
@@ -166,13 +217,13 @@ precedence are evaluated left-to-right. Use parentheses <code>(...)</code> to
 force a different grouping when needed.
 
 Example:
-<pre>
+<pre>{% highlight vespa-yql %}
 all(
     group(my_field)
     filter( (regex("bar.*", some_field) or regex("baz.*", other_field)) and not regex(".*foo", some_field))
     each(...)
 )
-</pre>
+{% endhighlight %}</pre>
 </p>
 
 
@@ -246,23 +297,35 @@ Lists created using the <code>each</code> keyword can be assigned a label
 using the construct <code>each(...) as(mylabel)</code>.
 The outputs created by each clause will be identified by this label.
 </p>
-<pre>all(group(year) each(output(count())) as(by_year))</pre>
+<pre>{% highlight vespa-yql %}
+all(group(year) each(output(count())) as(by_year))
+{% endhighlight %}</pre>
 <p>
 Individual output aggregators can also be assigned a label by adding
 <code>as(mylabel)</code> to the aggregator inside <code>output(...)</code>.
 This labels the aggregation result, not the group list.
 </p>
-<pre>all(group(author) output(count() as(authors_cardinality)))</pre>
+<pre>{% highlight vespa-yql %}
+all(group(author) output(count() as(authors_cardinality)))
+{% endhighlight %}</pre>
 
 <h2 id="aliases">Aliases</h2>
 <p>
     Grouping expressions can be tagged with an <em>alias</em>.
     An alias allows the expression to be reused without having to repeat the expression verbatim.
 </p>
-<pre>all(group(a) alias(myalias, count()) each(output($myalias)))</pre> is equivalent to
-<pre>all(group(a) each(output(count())))</pre>.
-<pre>all(group(a) order($myalias=count()) each(output($myalias)))</pre> is equivalent to
-<pre>all(group(a) order(count()) each(output(count())))</pre>.
+<pre>{% highlight vespa-yql %}
+all(group(a) alias(myalias, count()) each(output($myalias)))
+{% endhighlight %}</pre> is equivalent to
+<pre>{% highlight vespa-yql %}
+all(group(a) each(output(count())))
+{% endhighlight %}</pre>.
+<pre>{% highlight vespa-yql %}
+all(group(a) order($myalias=count()) each(output($myalias)))
+{% endhighlight %}</pre> is equivalent to
+<pre>{% highlight vespa-yql %}
+all(group(a) order(count()) each(output(count())))
+{% endhighlight %}</pre>.
 
 <h2 id="precision">Precision</h2>
 <p>
@@ -271,6 +334,52 @@ during expression evaluation to give the container node more data to consider
 when selecting the groups that are to be evaluated further:
 <code>each(...) precision(1000)</code>
 A higher number costs more bandwidth, but leads to higher accuracy in some cases.
+</p>
+
+<h2 id="parameter-substitution">Parameter substitution</h2>
+<p>Available since {% include version.html version="8.774.9" %}.</p>
+<p>
+  As in <a href="yql.html#parameter-substitution">YQL</a>, a grouping expression can refer to a query parameter
+  with <code>@name</code>. The reference is replaced by the value of the query parameter <code>name</code>.
+  The value is used as-is and is never parsed as grouping syntax,
+  so it needs no escaping and cannot change the structure of the expression.
+  This makes it safe to pass user input to a grouping expression:
+</p>
+<pre>
+select=all( group(category) filter(in(category, @categories)) each(output(count())) )&amp;categories=books,music
+</pre>
+<p>
+  References can be used in the <a href="../api/query.html#select">select</a> parameter,
+  in the grouping expression after <code>|</code> in <a href="yql.html#grouping">YQL</a>,
+  and in <a href="../api/query.html#select.grouping">select.grouping</a>.
+  In <code>select.grouping</code>, the <a href="json-query-language.html#grouping">JSON label field</a>
+  can also be a reference: <code>"label": "@name"</code>.
+</p>
+<p>
+  Parameter names follow the same rules as in YQL: they start with a letter or underscore,
+  followed by letters, digits, underscores or hyphens.
+</p>
+<p>How the value is interpreted depends on where the reference is used:</p>
+<ul>
+  <li><strong>Strings</strong>: the pattern in <code>regex</code>, the label in <code>as</code>,
+    and constants in expressions. The value is always a string, even when it looks like a number:
+    with <code>label=42</code>, <code>group(@label)</code> is the same as <code>group("42")</code>,
+    not <code>group(42)</code>.</li>
+  <li><strong>Numbers</strong>: the bounds of <code>range</code>, and the arguments of <code>accuracy</code>,
+    <code>fixedwidth</code> and other functions that take a numeric constant.
+    The value must be an integer or a decimal number, and may be negative.</li>
+  <li><strong>Integers</strong>: <code>max</code>, <code>precision</code>,
+    and the number of bits in <code>md5</code> (1 to 128) and <code>xorbit</code> (1 to 64).
+    The value must be an integer within the range the clause accepts.
+    A decimal number such as <code>2.5</code> is rejected.</li>
+  <li><strong>Lists</strong>: a reference in <code>in(<em>expression</em>, @my_list)</code>.
+    The value uses the same format as <code>in (@my_list)</code> in YQL:
+    either <code>value, value, ...</code> with each value optionally quoted, or a JSON array.
+    A single reference can therefore supply any number of values.</li>
+</ul>
+<p>
+  If a referenced parameter is not set, the query fails with the error <code>Input 'name' is not set</code>.
+  References cannot be used for field names, function names or the bounds of <code>bucket</code>.
 </p>
 
 <h2 id="query-parameters">Query parameters</h2>
@@ -313,6 +422,7 @@ that belong to that group (using the <code>output</code> operation):
   <li>The count of documents in a group</li>
   <li>The sum, average, min, max, xor or standard deviation of an expression</li>
   <li>Multiple quantiles of an expressions value</li>
+  <li>The value of an expression for the document with the smallest or largest value of another expression (argmin, argmax)</li>
 </ul>
 <p>
 When all arguments are numeric, the result type is resolved by looking at the argument types.
@@ -328,10 +438,26 @@ The result is the sum of sums of values.
 Similarly, <code>max(myarray)</code> will yield the maximal element over all elements in all documents, and so on.
 </p><p>
 Compute quantiles by listing the desired quantile values (comma-separated) in brackets, followed by a comma and the expression (e.g., a field):
-<pre>all( group(city) each(output(quantiles([0.5], delivery_days) as(median_delivery_days) ) ) )</pre>
+<pre>{% highlight vespa-yql %}
+all( group(city) each(output(quantiles([0.5], delivery_days) as(median_delivery_days) ) ) )
+{% endhighlight %}</pre>
 to compute the median, or
-<pre>all( group(city) each(output(quantiles([0.5, 0.9], delivery_days))) )</pre>
+<pre>{% highlight vespa-yql %}
+all( group(city) each(output(quantiles([0.5, 0.9], delivery_days))) )
+{% endhighlight %}</pre>
 This computes the median (p50) and 90th percentile (p90) time to delivery in days per city. Note that quantiles are computed using <a href="https://datasketches.apache.org/docs/KLL/KLLSketch.html">KLL Sketch</a>, so they are approximate.
+</p><p>
+Use <code>argmin(key, value)</code> and <code>argmax(key, value)</code> to get the value of one expression
+for the document that has the smallest or largest value of another expression:
+<pre>{% highlight vespa-yql %}
+all( group(artist) each(output(argmin(price, title))) )
+{% endhighlight %}</pre>
+This outputs the title of the cheapest track per artist, where <code>min(price)</code> would only output the price.
+The key must be numeric, while the value can be of any type, including multivalue.
+Documents where the key is not set are skipped, and the output is <code>null</code> if no document in the group has a key.
+If several documents share the smallest or largest key, one of them is selected.
+Both can be used in <code>order</code>, e.g. <code>order(-argmin(price, title))</code>.
+Available since {% include version.html version="8.761.27" %}.
 </p><p>
 Multivalue fields, such as maps and arrays, can be used for grouping.
 However, using aggregation functions such as sum() on such fields can give misleading results.
@@ -339,12 +465,16 @@ Assume a map from strings to integers (<code>map&lt;string, int&gt;</code>),
 where the strings are some sort of key to use for grouping.
 The following expression will provide the sum of the values for all keys:
 </p>
-<pre>all( group(mymap.key) each(output(sum(mymap.value))) )</pre>
+<pre>{% highlight vespa-yql %}
+all( group(mymap.key) each(output(sum(mymap.value))) )
+{% endhighlight %}</pre>
 <p>
 and not the sum of the values within each key, as one would expect.
 It is still, however, possible to run the following expression to get the sum of values within a specific key:
 </p>
-<pre>all( group("my_group") each(output(sum(mymap{"foo"}))) )</pre>
+<pre>{% highlight vespa-yql %}
+all( group("my_group") each(output(sum(mymap{"foo"}))) )
+{% endhighlight %}</pre>
 <p>
 Refer to the system test for
 <a href="https://github.com/vespa-engine/system-test/blob/master/tests/search/struct_and_map_types/struct_and_map_grouping.rb">grouping on struct and map types</a>
@@ -369,6 +499,8 @@ for more examples.
   <tr><td>xor</td><td>XOR the values (their least significant 64 bits) of all selected documents</td><td>Any</td><td>Long</td></tr>
   <tr><td>stddev</td><td>Computes the population standard deviation over all selected documents</td><td>Numeric</td><td>Double</td></tr>
   <tr><td>quantiles</td><td>Computes one or multiple quantiles of the values of an expression. Quantiles must be a number between 0 and 1 inclusive.</td><td>[Numeric+], Expr</td><td>[{"quantile":Double,"value":Double}+]</td></tr>
+  <tr><td>argmin</td><td>Keeps the value of the second argument for the document with the smallest value of the first argument</td><td>Numeric, Any</td><td>Any</td></tr>
+  <tr><td>argmax</td><td>Keeps the value of the second argument for the document with the largest value of the first argument</td><td>Numeric, Any</td><td>Any</td></tr>
 
   <tr><td colspan="4"><h3 id="hit-aggregators">Hit aggregators</h3></td></tr>
   <tr class="trx"><th class="thx">Name</th><th class="thx">Description</th><th class="thx">Arguments</th><th class="thx">Result</th></tr>
@@ -490,6 +622,10 @@ for more examples.
               <code>bucket(3)</code>/<code>bucket[3]</code> are the same as <code>bucket[3,4></code>.
               This is allowed for string expressions as well;
               <code>bucket("c")</code> is identical to <code>bucket["c", "c "></code>.</li>
+          <li>The buckets split the value range into separate groups, so each value lands in at most one bucket.
+              To find the bucket for each document quickly, Vespa expects the buckets in increasing order and
+              without overlaps, and rejects a request where they are not.
+              Neighboring buckets may share a boundary, as in <code>bucket(0,1000), bucket(1000,2000)</code>.</li>
       </ul>
   </td><td>Any, Bucket+</td><td>BucketList</td></tr>
 
@@ -537,7 +673,9 @@ for more examples.
     Works on both <code>position</code> and <code>array&lt;position&gt;</code> fields.
     For arrays, the minimum distance across all positions in the document is returned.
     </p>
-    <pre>all( group(fixedwidth(geo_distance(attribute(location), 63.4, 10.4).km, 10)) each(output(count())) )</pre>
+    <pre>{% highlight vespa-yql %}
+all( group(fixedwidth(geo_distance(attribute(location), 63.4, 10.4).km, 10)) each(output(count())) )
+{% endhighlight %}</pre>
     <p>Available since {% include version.html version="8.664.22" %}.</p>
   </td><td>Attribute(position), Double(lat), Double(lng)</td><td>Double</td></tr>
   <tr><td>uca</td><td>
@@ -545,8 +683,12 @@ for more examples.
     Converts the attribute string using <a href="https://www.unicode.org/reports/tr10/">unicode collation algorithm</a>.
     Groups are sorted using locale-aware sorting, with the default and primary strength values, respectively:
     </p>
-    <pre>all( group(s) order(max(uca(s, "sv"))) each(output(count())) )</pre>
-    <pre>all( group(s) order(max(uca(s, "sv", "PRIMARY"))) each(output(count())) )</pre>
+    <pre>{% highlight vespa-yql %}
+all( group(s) order(max(uca(s, "sv"))) each(output(count())) )
+{% endhighlight %}</pre>
+    <pre>{% highlight vespa-yql %}
+all( group(s) order(max(uca(s, "sv", "PRIMARY"))) each(output(count())) )
+{% endhighlight %}</pre>
   </td>
     <td>Any, Locale(String), Strength(String)</td><td>Raw</td>
   </tr>
@@ -587,6 +729,7 @@ for more examples.
   <tr><td colspan="4"><h3 id="string-filters">String filters</h3></td></tr>
   <tr class="trx"><th class="thx">Name</th><th class="thx">Description</th><th class="thx">Arguments</th><th class="thx">Result</th></tr>
   <tr><td>regex</td><td>Matches a field against a regular expression string.</td><td>String, Expression</td><td>Bool</td></tr>
+  <tr><td>in</td><td>Matches when the string value of an expression is equal to one of the given strings.</td><td>Expression, String, String...</td><td>Bool</td></tr>
 
   <tr><td colspan="4"><h3 id="numeric-filters">Numeric filters</h3></td></tr>
   <tr class="trx"><th class="thx">Name</th><th class="thx">Description</th><th class="thx">Arguments</th><th class="thx">Result</th></tr>
@@ -625,6 +768,8 @@ aggr       ::= ( ( "count" "(" ")" ) |
                  ( "xor" "(" exp ")" ) |
                  ( "stddev" "(" exp ")" ) |
                  ( "quantiles" "(" "[" number ( "," number )* "]" "," exp ")" ) |
+                 ( "argmin" "(" exp "," exp ")" ) |
+                 ( "argmax" "(" exp "," exp ")" ) |
                  ( "summary" "(" [ identifier ] ")" ) )
                [ "as" "(" identifier ")" ]
 expList    ::= exp ( "," exp )*
@@ -636,7 +781,8 @@ filterNot  ::= "not" filterNot | filterPrim
 filterPrim ::= ( "(" filterExp ")" ) |
                ( "regex" "(" string "," exp ")" ) |
                ( "range" "(" number "," number "," exp [ "," boolean "," boolean ] ")" ) |
-               ( "istrue" "(" exp ")" )
+               ( "istrue" "(" exp ")" ) |
+               ( "in" "(" exp ( "," string )+ ")" )
 math       ::= value [ ( "+" | "-" | "*" | "/" | "%" ) value ]
 value      ::= ( "(" exp ")" ) |
                ( "add" "(" expList ")" ) |

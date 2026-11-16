@@ -130,6 +130,9 @@ Each array item is a grouping statement represented as JSON where
 - A direct `label` field on an `all` operation with a direct `each` labels the
   group list produced by that `each`, equivalent to `each(...) as(label)` in the
   [grouping language](grouping-language.html#labels).
+  The label can be a query parameter reference, `"label": "@name"`.
+  References can also be used inside the grouping language strings, see
+  [parameter substitution](grouping-language.html#parameter-substitution).
 - Output expression labels use grouping language syntax inside `output`, for
   example `"output": "count() as(total)"`.
 
@@ -137,9 +140,9 @@ Examples:
 
 Grouping statement:
 
-```
-| all(group(time.year(a)) each(output(count())
-    all(group(time.monthofyear(a)) each(output(count())))
+```vespa-yql
+| all(group(time.year(a)) each(output(count()))
+    all(group(time.monthofyear(a)) each(output(count()))))
 ```
 equivalent JSON `grouping`-argument:
 
@@ -160,7 +163,7 @@ equivalent JSON `grouping`-argument:
 
 Grouping statement:
 
-```
+```vespa-yql
 all(
   group(year)
   each(output(count())) as(by_year)
@@ -185,7 +188,7 @@ equivalent JSON `grouping`-argument:
 
 Grouping statement:
 
-```
+```vespa-yql
 all(
   group(author)
   output(count() as(authors_cardinality))
@@ -207,7 +210,7 @@ equivalent JSON `grouping`-argument:
 
 Grouping statement:
 
-```
+```vespa-yql
 all(group(predefined(foo, bucket[1, 2>, bucket[3, 4>)))
 ```
 equivalent JSON `grouping`-argument:
@@ -567,7 +570,7 @@ Format of this in JSON:
 "where" : {
   "rank" : [
     { "contains" : [ "a", "A" ] },
-    { "contains" : [ "b", "B" ] }
+    { "contains" : [ "b", "B" ] }
   ]
 }
 ```

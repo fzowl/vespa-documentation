@@ -40,7 +40,7 @@ redirect_from:
   one can use <a href="../reference/writing/indexing-language.html#to_epoch_second">to_epoch_second</a>
   to transform into a long-field:
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 schema docs {
 
     document docs {
@@ -57,7 +57,7 @@ schema docs {
         indexing: now | attribute | summary
     }
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   The synthetic <code>date</code> field can be used in queries and <a href="../querying/grouping.html">grouping</a>:
 </p>
@@ -98,6 +98,10 @@ input mySentenceArray | for_each { input title . " " . _ } | embed | attribute m
 <p>
   In this example two fields are concatenated, but if one of the fields is empty, the empty string is used instead.
   If the empty string alternatives are not provided, no embedding will be produced if either input field is missing.
+</p>
+<p>
+  See the <a href="../reference/writing/indexing-language.html#input">reference</a> for details
+  on updates to multiple fields.
 </p>
 
 
@@ -149,7 +153,7 @@ input mt | switch {
     <li>Making the <a href="../schemas/documents.html#namespace">namespace</a> searchable</li>
     <li>Eliminate duplication of document id as a field in feed requests</li>
   </ul>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 schema doc {
     document doc {
     }
@@ -165,7 +169,7 @@ schema doc {
         attribute: fast-search
     }
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   Available since {% include version.html version="8.741.10" %}.
 </p>

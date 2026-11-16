@@ -238,31 +238,31 @@ $ vespa clone album-recommendation myapp && cd myapp
   Modify the container and content cluster specifications in the application package, as shown below:
 </p>
 
-<pre>
-&lt;?xml version="1.0" encoding="utf-8" ?&gt;
-&lt;services version="1.0" xmlns:deploy="vespa" xmlns:preprocess="properties"&gt;
+<pre>{% highlight xml %}
+<?xml version="1.0" encoding="utf-8" ?>
+<services version="1.0" xmlns:deploy="vespa" xmlns:preprocess="properties">
 
-    &lt;container id="default" version="1.0"&gt;
-        &lt;document-api/&gt;
-        &lt;search/&gt;
+    <container id="default" version="1.0">
+        <document-api/>
+        <search/>
 
-        &lt;nodes count="2"&gt;
-            &lt;resources vcpu="2" memory="2Gb" disk="20Gb" /&gt;
-        &lt;/nodes&gt;
-    &lt;/container&gt;
+        <nodes count="2">
+            <resources vcpu="2" memory="2Gb" disk="20Gb" />
+        </nodes>
+    </container>
 
-    &lt;content id="music" version="1.0"&gt;
-        &lt;min-redundancy&gt;2&lt;/min-redundancy&gt;
-        &lt;documents&gt;
-            &lt;document type="music" mode="index" /&gt;
-        &lt;/documents&gt;
-        &lt;nodes count="2"&gt;
-            &lt;resources vcpu="2" memory="2Gb" disk="20Gb" /&gt;
-        &lt;/nodes&gt;
-    &lt;/content&gt;
+    <content id="music" version="1.0">
+        <min-redundancy>2</min-redundancy>
+        <documents>
+            <document type="music" mode="index" />
+        </documents>
+        <nodes count="2">
+            <resources vcpu="2" memory="2Gb" disk="20Gb" />
+        </nodes>
+    </content>
 
-&lt;/services&gt;
-</pre>
+</services>
+{% endhighlight %}</pre>
 
 <p>
   Enable port-forwarding from the ConfigServer's ingress port <code>19071</code> to your local port <code>19071</code>. Any ConfigServer
@@ -281,6 +281,23 @@ $ kubectl -n $NAMESPACE port-forward pod/cfg-1 19071:19071
 <pre>
 $ vespa prepare --target local
 $ while ! vespa --target local activate; do sleep 1; done
+</pre>
+
+<p>
+  These commands can also be done programmatically via the
+  <a href="https://docs.vespa.ai/en/reference/api/deploy-v2.html">Deploy API</a>.
+</p>
+
+<pre>
+# Create a session from the application package
+$ curl -X POST --data-binary @application.zip -H "Content-Type: application/zip" \
+    http://localhost:19071/application/v2/tenant/default/session
+
+# Prepare the session, using the session-id returned by the previous call
+$ curl -X PUT http://localhost:19071/application/v2/tenant/default/session/2/prepare
+
+# Activate the prepared session
+$ curl -X PUT http://localhost:19071/application/v2/tenant/default/session/2/active
 </pre>
 
 <p>
@@ -388,3 +405,19 @@ $ vespa query 'yql=select * from music where true limit 1'
 <p>
   Refer to the <a href="https://docs.vespa.ai/en/reference/clients/vespa-cli/vespa.html">Vespa CLI documentation</a> for the full list of available commands.
 </p>
+
+<p>
+  This can also be performed programmatically via the <a href="https://docs.vespa.ai/en/reference/api/document-v1.html">Document v1 API</a>,
+  and the <a href="https://docs.vespa.ai/en/reference/api/query.html">Query API</a>:
+</p>
+
+<pre>
+# Feed a document
+$ curl -X POST -H "Content-Type: application/json" --data @document.json \
+    http://localhost:8080/document/v1/mynamespace/music/docid/a-head-full-of-dreams
+
+# Query documents
+$ curl -H "Content-Type: application/json" \
+    --data '{"yql": "select * from music where true limit 1"}' \
+    http://localhost:8080/search/
+</pre>

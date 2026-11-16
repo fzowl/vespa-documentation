@@ -19,7 +19,7 @@ with <em>.model</em> suffix:
 
 
 <h2 id="model-file-format-specification">.model file format specification</h2>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 model [name] {
 
     inputs {
@@ -35,14 +35,16 @@ model [name] {
     })*
 
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
 The elements can appear in any order (and number).
 </p>
 
 <h3 id="constant">Constant element</h3>
 
-<pre>[constant-name] [type]?: [scalar, <a href="tensor.html#tensor-literal-form">tensor on literal form</a>, or <code>file:</code> followed by a file reference]</pre>
+<pre>{% highlight vespa-schema-language %}
+[constant-name] [type]?: [scalar, <a href="tensor.html#tensor-literal-form">tensor on literal form</a>, or file: followed by a file reference]
+{% endhighlight %}</pre>
 
 <table class="table">
     <tr>
@@ -72,7 +74,7 @@ The elements can appear in any order (and number).
 
 <p>Constant examples:</p>
 
-<pre>
+<pre>{% highlight vespa-schema-language %}
 constants {
     myDouble: 0.5
     constant(myOtherDouble) double: 0.6
@@ -80,7 +82,7 @@ constants {
     constant(myMap) tensor(key{}):{key1: 1.0, key2: 2.0}
     constant(myLargeTensor) tensor(x[10000]): file:constants/myTensor.json.lz4
 }
-</pre>
+{% endhighlight %}</pre>
 
 
 
@@ -91,7 +93,8 @@ This file must be saved as <code>example.model</code> somewhere in the
 <a href="../applications/application-packages.html">models</a> directory tree,
 and the same directory must also contain <code>myLargeConstant.json.lz4</code> with a tensor as compressed json.
 </p>
-<pre>{% raw %}
+<pre>{% highlight vespa-schema-language %}
+{% raw %}
 model example {
 
     # All inputs that are not scalar (aka 0-dimensional tensor) must be declared
@@ -115,7 +118,8 @@ model example {
     }
 
 }
-</pre>{% endraw %}
+{% endraw %}
+{% endhighlight %}</pre>
 <p>
 This makes the model <em>example</em> available with the functions <em>foo1</em> and <em>foo2</em>.
 </p>

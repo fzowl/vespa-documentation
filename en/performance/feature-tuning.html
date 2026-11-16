@@ -18,11 +18,11 @@ title: "Vespa Serving Tuning"
   Also see the <a href="/en/reference/schemas/schemas.html#modifying-schemas">procedure</a>
   for changing from attribute to index and vice-versa.
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field timestamp type long {
     indexing: summary | attribute
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   If both index and attribute are configured for string-type fields,
   Vespa will search and match against the index with default match <code>text</code>.
@@ -37,13 +37,13 @@ field timestamp type long {
   will add an in-memory B-tree posting list structure
   which enables faster search for some cases (but not all, see next paragraph):
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field timestamp type long {
     indexing:  summary | attribute
     attribute: fast-search
     rank:      filter
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   When Vespa runs a query with multiple query items, it builds a query execution plan.
   It tries to optimize the plan so that the temporary result set is as small as possible.
@@ -59,16 +59,16 @@ field timestamp type long {
   A query with only one query term searching an attribute field without <code>fast-search</code>
   would be a linear scan over all documents and thus expensive:
 </p>
-<pre>
+<pre>{% highlight vespa-yql %}
 select * from sources * where range(timestamp, 0, 100)
-</pre>
+{% endhighlight %}</pre>
 <p>
   But if this query term is <em>and</em>-ed with another term that matches fewer documents,
   that term will determine the cost instead, and fast-search won't be necessary, e.g.:
 </p>
-<pre>
+<pre>{% highlight vespa-yql %}
 select * from sources * where range(timestamp, 0, 100) and uuid contains "123e4567-e89b-12d3-a456-426655440000"
-</pre>
+{% endhighlight %}</pre>
 <p>The general rules of thumb for when to use fast-search for an attribute field are:</p>
 <ul>
   <li>Use <em>fast-search</em> if the attribute field is searched without any other query terms</li>
@@ -106,7 +106,7 @@ for optimal performance. See reference <a href="../reference/schemas/schemas.htm
   BM25 ranking combines the scores of both fields in the <em>default</em> rank profile.
   In addition, the <em>optimized</em> rank profile specifies tuning parameters to improve query performance:
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 schema article {
     document article {
         field title type string {
@@ -137,7 +137,7 @@ schema article {
         }
     }
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   The following shows an example question-answer query against a collection of articles,
   using the <em>weakAnd</em> query operator and the <em>optimized</em> rank profile.
@@ -202,7 +202,7 @@ schema article {
 <h3 id="performance">Performance</h3>
 <p>
   The tuning parameters used in the <em>optimized</em> rank profile have been shown to provide a good tradeoff between performance and quality in testing.
-  A Wikipedia dataset with <a href="https://nlp.stanford.edu/pubs/rajpurkar2016squad.pdf">SQuAD</a>
+  A Wikipedia dataset with <a href="https://rajpurkar.github.io/SQuAD-explorer/">SQuAD</a>
   (Stanford Question Answering Dataset) queries was used to analyze performance,
   and <a href="https://ir.nist.gov/trec-covid/">trec-covid</a>,
   <a href="https://microsoft.github.io/msmarco/">MS MARCO</a> and
@@ -271,7 +271,7 @@ schema article {
   The application level filter constraints in the query could benefit from using <em>TAAT</em>.
   Given the following document schema:
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 search news {
     document news {
         field title type string {}
@@ -297,7 +297,7 @@ search news {
         }
     }
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   In this case, the rank profile only uses two ranking features,
   the popularity attribute and the <a href="../ranking/bm25.html">bm25</a> score of the userQuery().
@@ -365,13 +365,13 @@ search news {
   To avoid this, change the mode to <a href="../reference/schemas/schemas.html#word">match: word</a> to
   treat the entire uuid as <em>one</em> token/word:
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field uuid type string {
     indexing: summary | index
     match:    word
     rank:     filter
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   In addition, configure the <code>uuid</code> as a
   <a href="../reference/schemas/schemas.html#rank">rank: filter</a> field -
@@ -417,17 +417,17 @@ field uuid type string {
   If the contents of a field in the document match any of the values in the query set, it should be retrieved.
   E.g., searching data for a set of users:
 </p>
-<pre>
+<pre>{% highlight vespa-yql %}
 select * from sources * where user_id = 1 or user_id = 2 or user_id = 3 or user_id = 3 or user_id = 4 or user_id 5 ...
-</pre>
+{% endhighlight %}</pre>
 <p>
   For OR filters over the same field, it is strongly recommended to use the
   <a href="../reference/querying/yql.html#in">in query operator</a> instead.
   It has considerably better performance than plain OR for set filtering:
 </p>
-<pre>
+<pre>{% highlight vespa-yql %}
 select * from sources * where user_id in (1, 2, 3, 4, 5)
-</pre>
+{% endhighlight %}</pre>
 {% include note.html content='
 Large sets can slow down YQL-parsing of the query -
 see <a href="../reference/querying/yql.html#parameter-substitution">parameter substitution</a>
@@ -439,18 +439,18 @@ for how to send the set in a compact, performance-effective way.'%}
   it is also faster to use <code>hash</code> dictionary instead of <code>btree</code>,
   which is the default data structure for dictionaries for attribute fields with <code>fast-search</code>:
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field user_id type long {
     indexing:   summary | attribute
     attribute:  fast-search
     dictionary: hash
     rank:       filter
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   For <code>string</code> fields, we also need to include <a href="/en/reference/schemas/schemas.html#match">match</a>
   settings if using the <code>hash</code> dictionary:</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field user_id_str type string {
     indexing:   summary | attribute
     attribute:  fast-search
@@ -461,7 +461,7 @@ field user_id_str type string {
         cased
     }
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
 If having 10M unique user_ids in the dictionary and searching for 1000 users per query,
 the <em>btree</em> dictionary would be 1000 lookup times log(10M),
@@ -480,6 +480,15 @@ offers more flexibility in terms of <a href="/en/reference/schemas/schemas.html#
 For most use cases, the time spent on dictionary traversal is negligible compared to the time spent on
 query evaluation (matching and ranking). If the query is very selective, for example, using
 vespa as a key-value lookup store with ranking support, the dictionary traversal time can be significant.'%}
+
+<h2 id="grouping-and-aggregation">Grouping and aggregation</h2>
+<p>
+  <a href="../querying/grouping.html">Grouping</a> is evaluated over every matched document on every content node,
+  so aggregating over a large result set is expensive.
+  See <a href="../querying/grouping.html#aggregating-over-large-result-sets">aggregating over large result sets</a>
+  for how to reduce the work per query and how to compute approximate counts from a corpus sample.
+</p>
+
 
 <h2 id="document-summaries-hits">Document summaries - hits</h2>
 <p>

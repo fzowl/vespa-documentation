@@ -32,6 +32,8 @@ container [version, id]
         <a href="search.html#renderer">renderer</a>
         <a href="search.html#threadpool">threadpool</a>
         <a href="search.html#significance">significance</a>
+    <a href="#skills">skills</a>
+        <a href="#schemas">schemas</a>
     <a href="docproc.html">document-processing</a>
         <a href="#include">include [dir]</a>
         <a href="docproc.html#documentprocessor">documentprocessor</a>
@@ -45,16 +47,17 @@ container [version, id]
         <a href="processing.html#renderer">renderer</a>
     <a href="#document-api">document-api</a>
         <a href="#abortondocumenterror">abortondocumenterror</a>
-        <a href="#retryenabled">retryenabled</a>
-        <a href="#route">route</a>
+        <a href="#ignore-undefined-fields">ignore-undefined-fields</a>
+        <a href="#legacy-feed-api">legacy-feed-api</a>
         <a href="#maxpendingdocs">maxpendingdocs</a>
         <a href="#maxpendingbytes">maxpendingbytes</a>
+        <a href="#mbusport">mbusport</a>
+        <a href="#max-document-size">max-document-size</a>
         <a href="#retrydelay">retrydelay</a>
+        <a href="#retryenabled">retryenabled</a>
+        <a href="#route">route</a>
         <a href="#timeout">timeout</a>
         <a href="#tracelevel">tracelevel</a>
-        <a href="#mbusport">mbusport</a>
-        <a href="#ignore-undefined-fields">ignore-undefined-fields</a>
-        <a href="#max-document-size">max-document-size</a>
     <a href="../../../ranking/stateless-model-evaluation.html">model-evaluation</a>
         <a href="../../../ranking/stateless-model-evaluation.html#onnx-inference-options">onnx</a>
     <a href="#inference">inference</a>
@@ -153,18 +156,18 @@ to the pertinent JDisc interfaces using the given binding.
   </tbody>
 </table>
 <p>Example:</p>
-<pre>
-&lt;container id="default" version="1.0"&gt;
-    &lt;handler id="com.yahoo.search.handler.LegacyBridge"&gt;
-        &lt;binding&gt;http://*/*&lt;/binding&gt;
-    &lt;/handler&gt;
-    &lt;handler bundle="the name in &lt;artifactId&gt; in pom.xml" id="com.mydomain.vespatest.RedirectingHandler"/&gt;
-    &lt;handler bundle="the name in &lt;artifactId&gt; in pom.xml" id="com.mydomain.vespatest.ExampleHandler"/&gt;
-    &lt;nodes&gt;
-        &lt;node hostalias="node1"/&gt;
-    &lt;/nodes&gt;
-&lt;/container&gt;
-</pre>
+<pre>{% highlight xml %}
+<container id="default" version="1.0">
+    <handler id="com.yahoo.search.handler.LegacyBridge">
+        <binding>http://*/*</binding>
+    </handler>
+    <handler bundle="the name in <artifactId> in pom.xml" id="com.mydomain.vespatest.RedirectingHandler"/>
+    <handler bundle="the name in <artifactId> in pom.xml" id="com.mydomain.vespatest.ExampleHandler"/>
+    <nodes>
+        <node hostalias="node1"/>
+    </nodes>
+</container>
+{% endhighlight %}</pre>
 
 
 
@@ -206,15 +209,15 @@ The <code>server</code> element holds the configuration of a JDisc server provid
   </tbody>
 </table>
 Example:
-<pre>
-&lt;server id="com.mydomain.vespatest.DemoServer"&gt;
-    &lt;config name="vespatest.demo-server"&gt;
-        &lt;response&gt;Hello, world!
-        &lt;/response&gt;
-        &lt;port&gt;16889&lt;/port&gt;
-    &lt;/config&gt;
-&lt;/server&gt;
-</pre>
+<pre>{% highlight xml %}
+<server id="com.mydomain.vespatest.DemoServer">
+    <config name="vespatest.demo-server">
+        <response>Hello, world!
+        </response>
+        <port>16889</port>
+    </config>
+</server>
+{% endhighlight %}</pre>
 
 
 
@@ -334,10 +337,9 @@ Example:
 
 
 <h2 id="components">components</h2>
-<p>
-Contains <a href="#component">component</a> elements.
-Can be used in conjunction with <a href="#include">include</a> for modular config of components.
-</p>
+
+<p>Contains <a href="#component">component</a> elements.
+Can be used in conjunction with <a href="#include">include</a> for modular config of components.</p>
 
 
 
@@ -380,41 +382,38 @@ components</a> for details and examples.
   </tbody>
 </table>
 <p>Example:</p>
-<pre>
-&lt;component id="com.mydomain.demo.DemoComponent" bundle="the name in &lt;artifactId&gt; in pom.xml" /&gt;
-</pre>
+<pre>{% highlight xml %}
+<component id="com.mydomain.demo.DemoComponent" bundle="the name in <artifactId> in pom.xml" />
+{% endhighlight %}</pre>
+
+
+
+<h2 id="skills">skills</h2>
+
+<p>Adds the <code>skills/v1</code> API to this container to provide agent users with information
+about how to use this service. This may contain <a href="#schemas">schemas</a> element.</p>
+
+
+
+<h2 id="schemas">schemas</h2>
+
+<p>Adds the <code>schemas</code> skill to this container at the path <code>skills/v1/schemas</code>.
+This provides agent users with information on how to query the data in this application, see
+<a href="../../../rag/agent-ready-schemas">agent-ready schemas</a>.</p>.
+
+<p>This requires the <code>search</code> tag to be present.</p>
 
 
 
 <h2 id="document-api">document-api</h2>
 <p>
 Use to enable <a href="../../api/api.html">Document API</a> operations to a container cluster.
-Children elements:
+Child elements:
 </p>
 <table class="table">
   <thead>
     <tr><th>Name</th><th>Required</th><th>Value</th><th>Default</th><th>Description</th></tr>
   </thead><tbody>
-    <tr><th>binding</th>
-      <td>optional</td>
-      <td>string</td>
-      <td>http://*/</td>
-      <td>
-        <p id="document-api-binding">
-        The URI to map the document-api handlers to. Multiple bindings are valid. Must end with a '/'.
-        Note that each document-api handler will get its individual binding by adding a suffix,
-        e.g. the feed handler will add 'feed/', the remove handler will add 'remove/' and so on. Example:
-        </p>
-<pre>
-&lt;document-api&gt;
-    &lt;binding&gt;http://*/document-api/&lt;/binding&gt;
-    &lt;binding&gt;https://*/document-api/&lt;/binding&gt;
-&lt;/document-api&gt;
-</pre>
-        With these configured bindings, the feed handler will be available at
-        <code>http://*/document-api/feed/</code> and <code>https://*/document-api/feed/</code>.
-        For other handlers, just replace 'feed/' with the appropriate suffix, e.g. 'get/', 'remove/' etc.
-      </td></tr>
     <tr><th>abortondocumenterror</th>
       <td>optional</td>
       <td>true/false</td>
@@ -428,6 +427,79 @@ Children elements:
         Note that malformed XML in the input will abort the feed regardless of this setting.
         </p>
       </td></tr>
+    <tr><th>binding</th>
+      <td>optional</td>
+      <td>string</td>
+      <td>http://*/</td>
+      <td>
+        <p id="document-api-binding">
+        The URI to map the document-api handlers to. Multiple bindings are valid. Must end with a '/'.
+        Note that each document-api handler will get its individual binding by adding a suffix,
+        e.g. the feed handler will add 'feed/', the remove handler will add 'remove/' and so on. Example:
+        </p>
+<pre>{% highlight xml %}
+<document-api>
+    <binding>http://*/document-api/</binding>
+    <binding>https://*/document-api/</binding>
+</document-api>
+{% endhighlight %}</pre>
+        With these configured bindings, the feed handler will be available at
+        <code>http://*/document-api/feed/</code> and <code>https://*/document-api/feed/</code>.
+        For other handlers, just replace 'feed/' with the appropriate suffix, e.g. 'get/', 'remove/' etc.
+      </td></tr>
+    <tr><th>ignore-undefined-fields</th>
+      <td>optional</td>
+      <td>true/false</td>
+      <td>false</td>
+      <td>
+        <p id="ignore-undefined-fields">
+        Set to true to ignore undefined fields in document API operations and
+        let such operations complete successfully, rather than fail.
+        A <a href="../../api/document-v1.html#x-vespa-ignored-fields">response header is returned</a>
+        when field operations are ignored.
+        </p>
+      </td>
+    </tr>
+    <tr><th>legacy-feed-api</th>
+      <td>optional</td>
+      <td>disabled/enabled</td>
+      <td>enabled</td>
+      <td>
+        <p id="legacy-feed-api">
+          Set to disabled to not set up legacy feed API (which is only used by the legacy
+	  <a href="https://docs.vespa.ai/en/reference/release-notes/vespa8.html#vespa-http-client">vespa-http-client</a>.
+        </p>
+      </td>
+    </tr>
+    <tr><th>max-document-size</th>
+      <td>optional</td>
+      <td>string</td>
+      <td>100MiB</td>
+      <td>
+        <p id="max-document-size">
+        Specifies the maximum size of a document operation request accepted by the container,
+        measured as the uncompressed size of the request body. The limit applies to all document types
+        in the container cluster. A request larger than this limit will be rejected by the container
+        before the operation is forwarded to the content cluster.
+        </p>
+        <p>
+        Valid values are numbers including a unit (e.g. <em>10MiB</em>) and the value must be
+        between 1MiB and 2048MiB (inclusive). Values will be rounded to the nearest MiB,
+        so using MiB as a unit is preferable.
+        </p>
+        <p>
+        The value should normally not exceed the smallest
+        <a href="content.html#max-document-size">max-document-size</a> configured in any
+        content cluster that this container feeds to; a deployment warning is emitted otherwise.
+        </p>
+        <p>Example:</p>
+<pre>{% highlight xml %}
+<document-api>
+    <max-document-size>10MiB</max-document-size>
+</document-api>
+{% endhighlight %}</pre>
+      </td>
+    </tr>
     <tr><th>maxpendingbytes</th>
       <td>optional</td>
       <td>number</td>
@@ -493,67 +565,25 @@ Children elements:
         </p>
       </td>
     </tr>
-    <tr><th>ignore-undefined-fields</th>
-      <td>optional</td>
-      <td>true/false</td>
-      <td>false</td>
-      <td>
-        <p id="ignore-undefined-fields">
-        Set to true to ignore undefined fields in document API operations and
-        let such operations complete successfully, rather than fail.
-        A <a href="../../api/document-v1.html#x-vespa-ignored-fields">response header is returned</a>
-        when field operations are ignored.
-        </p>
-      </td>
-    </tr>
-    <tr><th>max-document-size</th>
-      <td>optional</td>
-      <td>string</td>
-      <td>100MiB</td>
-      <td>
-        <p id="max-document-size">
-        Specifies the maximum size of a document operation request accepted by the container,
-        measured as the uncompressed size of the request body. The limit applies to all document types
-        in the container cluster. A request larger than this limit will be rejected by the container
-        before the operation is forwarded to the content cluster.
-        </p>
-        <p>
-        Valid values are numbers including a unit (e.g. <em>10MiB</em>) and the value must be
-        between 1MiB and 2048MiB (inclusive). Values will be rounded to the nearest MiB,
-        so using MiB as a unit is preferable.
-        </p>
-        <p>
-        The value should normally not exceed the smallest
-        <a href="content.html#max-document-size">max-document-size</a> configured in any
-        content cluster that this container feeds to; a deployment warning is emitted otherwise.
-        </p>
-        <p>Example:</p>
-<pre>{% highlight xml %}
-<document-api>
-    <max-document-size>10MiB</max-document-size>
-</document-api>
-{% endhighlight %}</pre>
-      </td>
-    </tr>
   </tbody>
 </table>
 <p>Example:</p>
-<pre>
-&lt;document-api&gt;
-    &lt;binding&gt;http://*/document-api/&lt;/binding&gt;
-    &lt;binding&gt;https://*/document-api/&lt;/binding&gt;
-    &lt;abortondocumenterror&gt;false&lt;/abortondocumenterror&gt;
-    &lt;maxpendingbytes&gt;1048576&lt;/maxpendingbytes&gt;
-    &lt;maxpendingdocs&gt;1000&lt;/maxpendingdocs&gt;
-    &lt;mbusport&gt;1234&lt;/mbusport&gt;
-    &lt;retrydelay&gt;5.5&lt;/retrydelay&gt;
-    &lt;retryenabled&gt;false&lt;/retryenabled&gt;
-    &lt;route&gt;default&lt;/route&gt;
-    &lt;timeout&gt;250.5&lt;/timeout&gt;
-    &lt;tracelevel&gt;3&lt;/tracelevel&gt;
-    &lt;max-document-size&gt;10MiB&lt;/max-document-size&gt;
-&lt;/document-api&gt;
-</pre>
+<pre>{% highlight xml %}
+<document-api>
+    <binding>http://*/document-api/</binding>
+    <binding>https://*/document-api/</binding>
+    <abortondocumenterror>false</abortondocumenterror>
+    <maxpendingbytes>1048576</maxpendingbytes>
+    <maxpendingdocs>1000</maxpendingdocs>
+    <mbusport>1234</mbusport>
+    <retrydelay>5.5</retrydelay>
+    <retryenabled>false</retryenabled>
+    <route>default</route>
+    <timeout>250.5</timeout>
+    <tracelevel>3</tracelevel>
+    <max-document-size>10MiB</max-document-size>
+</document-api>
+{% endhighlight %}</pre>
 
 
 
@@ -607,27 +637,27 @@ Children elements:
 <p>
 <a href="../../../schemas/concrete-documents.html">Concrete document type</a> bindings for the container. Example:
 </p>
-<pre>
-&lt;container id="default" version="1.0"&gt;
-    &lt;document class="com.mydomain.concretedocs.Vehicle"
-              bundle="the name in &lt;artifactId&gt; in pom.xml"
-              type="vehicle"/&gt;
-    &lt;document class="com.mydomain.concretedocs.Vehicle"
-              bundle="the name in &lt;artifactId&gt; in pom.xml"
-              type="ship"/&gt;
-    &lt;document class="com.mydomain.concretedocs2.Disease"
-              bundle="the name in &lt;artifactId&gt; in pom.xml"
-              type="disease"/&gt;
-    &lt;search/&gt;
-    &lt;document-processing&gt;
-        &lt;chain id="default"&gt;
-            &lt;documentprocessor bundle="the name in &lt;artifactId&gt; in pom.xml"
-                               id="concretedocs.ConcreteDocDocProc"/&gt;
-        &lt;/chain&gt;
-    &lt;/document-processing&gt;
+<pre>{% highlight xml %}
+<container id="default" version="1.0">
+    <document class="com.mydomain.concretedocs.Vehicle"
+              bundle="the name in <artifactId> in pom.xml"
+              type="vehicle"/>
+    <document class="com.mydomain.concretedocs.Vehicle"
+              bundle="the name in <artifactId> in pom.xml"
+              type="ship"/>
+    <document class="com.mydomain.concretedocs2.Disease"
+              bundle="the name in <artifactId> in pom.xml"
+              type="disease"/>
+    <search/>
+    <document-processing>
+        <chain id="default">
+            <documentprocessor bundle="the name in <artifactId> in pom.xml"
+                               id="concretedocs.ConcreteDocDocProc"/>
+        </chain>
+    </document-processing>
     ...
-&lt;/container&gt;
-</pre>
+</container>
+{% endhighlight %}</pre>
 
 
 
@@ -702,18 +732,18 @@ Access logging can be disabled by setting the type to <code>disabled</code>.
 </table>
 
 <p>Example:</p>
-<pre>
-  &lt;accesslog fileNamePattern="$VESPA_HOME/logs/vespa/access/JsonAccessLog.&lt;container id&gt;.%Y%m%d%H%M%S"
-             symlinkName="JsonAccessLog.&lt;container id&gt;"
+<pre>{% highlight xml %}
+  <accesslog fileNamePattern="$VESPA_HOME/logs/vespa/access/JsonAccessLog.<container id>.%Y%m%d%H%M%S"
+             symlinkName="JsonAccessLog.<container id>"
              rotationInterval="0 1 ..."
-             type="json" &gt;
-    &lt;request-content&gt;
-        &lt;samples-per-second&gt;0.2&lt;/samples-per-second&gt;
-        &lt;path-prefix&gt;/search&lt;/path-prefix&gt;
-        &lt;max-bytes&gt;65536&lt;/max-bytes&gt;
-    &lt;/request-content&gt;
-  &lt;/accesslog&gt;
-</pre>
+             type="json" >
+    <request-content>
+        <samples-per-second>0.2</samples-per-second>
+        <path-prefix>/search</path-prefix>
+        <max-bytes>65536</max-bytes>
+    </request-content>
+  </accesslog>
+{% endhighlight %}</pre>
 
 
 
@@ -738,9 +768,9 @@ and must never point outside the package.
   </tbody>
 </table>
 <p>Example:</p>
-<pre>
-&lt;include dir="included_configs/search" /&gt;
-</pre>
+<pre>{% highlight xml %}
+<include dir="included_configs/search" />
+{% endhighlight %}</pre>
 
 
 
@@ -880,11 +910,11 @@ Contains one or more <code>group</code> elements.</p>
   </tbody>
 </table>
 <p>Example:</p>
-<pre>
-&lt;secret-store type="my-ckms"&gt;
-    &lt;group name="[key group]" environment="[environment]"/&gt;
-&lt;/secret-store&gt;
-</pre>
+<pre>{% highlight xml %}
+<secret-store type="my-ckms">
+    <group name="[key group]" environment="[environment]"/>
+</secret-store>
+{% endhighlight %}</pre>
 
 
 

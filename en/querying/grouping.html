@@ -166,6 +166,8 @@ function executeGrouping(yql, outputContainer) {
 
 function transformPreToExecutableCells() {
   document.querySelectorAll('pre:not(.no-transform)').forEach(pre => {
+    // A highlighted block has its own <pre> inside the one marked no-transform
+    if (pre.closest('.no-transform, .highlight')) return;
     const fullText = pre.textContent.trim();
     const splitIndex = fullText.indexOf('|');
     if (splitIndex === -1) return;
@@ -642,12 +644,13 @@ and <code>max</code> to limit the number of hits per group.
 </li><li>
     To order hits inside groups, use ranking. Add <code>ranking=pricerank</code> to the query
     to use the pricerank <a href="../basics/ranking.html">rank profile</a> to rank by price:
-<pre class="no-transform">
+<pre class="no-transform">{% highlight vespa-schema-language %}
 rank-profile pricerank inherits default {
     first-phase {
         expression: attribute(price)
     }
-}</pre>
+}
+{% endhighlight %}</pre>
 </li>
 </ul>
 
@@ -700,6 +703,17 @@ rank-profile pricerank inherits default {
 <p>
   To find out how many purchases have not been paid yet, prepend <code>istrue</code> with <code>not</code> like this:
   <code>not istrue(is_paid)</code>.
+</p>
+<p>
+  Use <code>in</code> to keep only values that are equal to one of a set of strings.
+  For instance, to count purchases per customer for two specific items:
+</p>
+<pre>
+/search/?yql=select * from sources * where true |
+    all(group(customer) filter(in(item, "Rocker arm", "Intake valve")) each(output(count())))
+</pre>
+<p>
+  The match is exact, not a regular expression. Only string values are supported.
 </p>
 
 <h2 id="global-limit">Global limit for grouping queries</h2>
@@ -795,13 +809,13 @@ all(
   should be overridden in a query profile if some groupings do not use <code>max</code> and the default values are too low.
 </p>
 
-<pre class="no-transform">
-  &lt;query-profile id="default"&gt;
-    &lt;field name="grouping.defaultMaxGroups"&gt;20&lt;/field&gt;
-    &lt;field name="grouping.defaultMaxHits"&gt;100&lt;/field&gt;
-    &lt;field name="grouping.globalMaxGroups"&gt;8000&lt;/field&gt;
-  &lt;/query-profile&gt;
-</pre>
+<pre class="no-transform">{% highlight xml %}
+  <query-profile id="default">
+    <field name="grouping.defaultMaxGroups">20</field>
+    <field name="grouping.defaultMaxHits">100</field>
+    <field name="grouping.globalMaxGroups">8000</field>
+  </query-profile>
+{% endhighlight %}</pre>
 
 <h2 id="performance-and-correctness">Performance and Correctness</h2>
 <p>
@@ -817,6 +831,100 @@ all(
 <p>
   Consider increasing the <a href="#ordering-and-limiting-groups">precision</a> value when using <code>max</code> in combination with <code>order</code>.
   The default precision may not achieve the required correctness for your use case.
+</p>
+
+<h2 id="aggregating-over-large-result-sets">Aggregating over large result sets</h2>
+<p>
+  Grouping is evaluated on every content node, over every document matching the query.
+  A query like
+</p>
+<pre class="no-transform">{% highlight vespa-yql %}
+select * from product where true | all(group(category) each(output(count())))
+{% endhighlight %}</pre>
+<p>
+  matches every document and feeds every match through the grouping engine, on every query.
+  The cost is proportional to the number of matched documents,
+  not to the number of groups returned.
+  Category counts for navigation in an e-commerce application is a typical example.
+</p>
+
+<h3 id="reduce-the-work-per-query">Reduce the work per query</h3>
+<ul>
+  <li>
+    Set <a href="../reference/api/query.html#hits">hits=0</a> (<code>limit 0</code> in YQL)
+    when only the aggregates are needed, so no document summaries are fetched.
+  </li>
+  <li>
+    Use the built-in <a href="../basics/ranking.html">unranked</a> rank profile
+    (<code>ranking.profile=unranked</code>) when the grouping does not use relevance,
+    so no rank score is computed for the matched documents.
+  </li>
+  <li>
+    Use <a href="#ordering-and-limiting-groups">max</a> on every grouping level and set
+    <a href="#global-limit">globalMaxGroups</a>.
+    This bounds the result size and the merge cost,
+    but does not reduce the number of documents evaluated.
+  </li>
+</ul>
+
+<h3 id="approximate-counts-from-a-corpus-sample">Approximate counts from a corpus sample</h3>
+<p>
+  When approximate counts are acceptable, aggregate over a random sample of the documents and scale the result.
+  Assign each document to one of 100 sample buckets in a synthetic field, using
+  <a href="../reference/writing/indexing-language.html#random">random</a>:
+</p>
+<pre class="no-transform">{% highlight vespa-schema-language %}
+schema product {
+    document product {
+        field category type string {
+            indexing: attribute | summary
+        }
+    }
+    field sample_bucket type int {
+        indexing: random 100 | attribute
+        attribute: fast-search
+        rank: filter
+    }
+}
+{% endhighlight %}</pre>
+<p>
+  <code>random 100</code> draws a uniformly distributed integer in the range [0, 100) when the document is put,
+  independent of the document content.
+  A partial update of other fields keeps the value; a new put of the document draws a new value.
+  Add the bucket as a filter to the query:
+</p>
+<pre class="no-transform">{% highlight vespa-yql %}
+select * from product where sample_bucket = 0 limit 0 | all(group(category) each(output(count())))
+{% endhighlight %}</pre>
+<p>
+  Multiply each count by 100 to estimate the count over the full corpus.
+  With <code>fast-search</code>, the filter is evaluated using the attribute's index instead of scanning all documents,
+  so both matching and grouping process only the sampled 1% of the corpus.
+  The filter combines with any other query terms, e.g. <code>where userQuery() and sample_bucket = 0</code>;
+  since the bucket is independent of the query, the matched set is sampled at the same rate.
+</p>
+<p>
+  The estimate for a group with <em>k</em> sampled documents is 100<em>k</em>,
+  with a relative standard error of approximately 1/&radic;<em>k</em>.
+  A group with 1000 sampled documents has a standard error of about 3%,
+  a group with 100 sampled documents about 10%.
+  Choose the sampling fraction from the smallest group that must be estimated with acceptable precision,
+  and use an exact query for groups with too few sampled documents.
+</p>
+<p>
+  Hits and grouping are computed over the same matched set,
+  so the sample filter also applies to the returned hits and to <code>totalCount</code>.
+  Use a separate query without the filter for the hits shown to the user.
+</p>
+
+<h3 id="caching-aggregates">Caching aggregates</h3>
+<p>
+  If the same aggregation is requested frequently and the result does not depend on the user,
+  such as category counts for a navigation menu, compute it once and serve it from a cache in a
+  <a href="../applications/searchers.html">Searcher</a>.
+  The FAQ has an example of a
+  <a href="../learn/faq.html#how-to-create-a-cache-that-refreshes-itself-regularly">component that refreshes a cache on a schedule</a>
+  by issuing the query itself, so the cost is paid at a fixed rate instead of per user query.
 </p>
 
 <h2 id="nested-groups">Nested Groups</h2>
@@ -1394,6 +1502,8 @@ so only matching elements are considered.  An example could be:
 <pre>
   select (&hellip;) | all(group(attributes.value) filter(regex("delivery_method",attributes.key)) each(output(sum(price)) each(output(summary()))))
 </pre>
+See <a href="#filtering-array-elements">filtering elements in an array of struct</a>
+for how to count the matching elements per document.
 </p>
 
 <h2 id="range-grouping">Range grouping</h2>
@@ -1505,23 +1615,23 @@ select (&hellip;)
 <p>
 reproduce the same result by passing the <em>this</em>-continuation along the original select:
 </p>
-<pre class="no-transform">
-select (&hellip;) | { 'continuations':['BGAAABEBCA'] }all(&hellip;)
-</pre>
+<pre class="no-transform">{% highlight vespa-yql %}
+select (…) | { 'continuations':['BGAAABEBCA'] }all(…)
+{% endhighlight %}</pre>
 <p>
 To display the next page of customers, pass the <em>this</em>-continuation of the root
 group, and the <em>next</em> continuation of the customer list:
 </p>
-<pre class="no-transform">
-select (&hellip;) | { 'continuations':['BGAAABEBCA', 'BGAAABEBEBC'] }all(&hellip;)
-</pre>
+<pre class="no-transform">{% highlight vespa-yql %}
+select (…) | { 'continuations':['BGAAABEBCA', 'BGAAABEBEBC'] }all(…)
+{% endhighlight %}</pre>
 <p>
   To display the previous page of customers, pass the <em>this</em>-continuation of the root group,
   and the <em>prev</em> continuation of the customer list:
 </p>
-<pre class="no-transform">
-select (&hellip;) | { 'continuations':['BGAAABEBCA', 'BGAAABEABC'] }all(&hellip;)
-</pre>
+<pre class="no-transform">{% highlight vespa-yql %}
+select (…) | { 'continuations':['BGAAABEBCA', 'BGAAABEABC'] }all(…)
+{% endhighlight %}</pre>
 <p>
   The <code>continuations</code> annotation is an ordered list of continuation strings.
   These are combined by replacement
@@ -1740,6 +1850,13 @@ Simple grouping to count the number of documents in each group and return the be
 </p>
 <pre>select * from purchase where true limit 0 |
   all(group(customer) each(output(quantiles([0.5,0.9], price))))
+  </pre>
+<p>
+  Use <code>argmin</code> or <code>argmax</code> to return the value of one field for the document
+  with the smallest or largest value of another, for instance the item of the most expensive purchase per customer:
+</p>
+<pre>select * from purchase where true limit 0 |
+  all(group(customer) each(output(argmax(price, item))))
   </pre>
 
 
@@ -2057,11 +2174,11 @@ select rating from restaurant where true |
   <!--li>
     Results can grow large when listing all fields.
     To limit to the information required, define a summary class like the below:
-<pre>
+<pre>{% highlight vespa-schema-language %}
 document-summary name_only {
     summary name {}
 }
-</pre>
+{% endhighlight %}</pre>
     In the query, use the class name in <code>each(output(summary(name_only)))</code>.
   </li-->
   <li>
@@ -2090,13 +2207,13 @@ document-summary name_only {
 }
 {% endhighlight %}</pre>
 <p>The map field <a href="../reference/schemas/schemas.html#map">schema definition</a> is:</p>
-<pre>
-field attributes type map&lt;string, string&gt; {
+<pre>{% highlight vespa-schema-language %}
+field attributes type map<string, string> {
     indexing: summary
     struct-field key   { indexing: attribute }
     struct-field value { indexing: attribute }
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   With this, one can group on both key (<code>delivery_method</code>, <code>sales_rep</code>, and <code>coupon</code>)
   and values (here counting each value).
@@ -2118,6 +2235,115 @@ field attributes type map&lt;string, string&gt; {
       group(attributes.key)
       each( group(attributes.value) each(output(sum(price))))
     )</pre>
+</p>
+
+
+<h2 id="filtering-array-elements">Filtering elements in an array of struct</h2>
+<p>
+  When the <code>group</code> expression refers to a field in an array of struct,
+  each array element is grouped as if it were a separate sub-document,
+  and a <code>filter</code> on that level is evaluated once per element.
+  Other fields of the same struct referenced in the filter are read from the same element,
+  so the filter can combine several struct fields.
+  Use this to count, per document, how many elements satisfy a condition.
+</p>
+<p>Take an <code>order</code> document with an array of <code>line</code> structs:</p>
+<pre class="no-transform">{% highlight vespa-schema-language %}
+schema order {
+    document order {
+        field id type string {
+            indexing: attribute | summary
+        }
+        struct line {
+            field product type string {}
+            field quantity type int {}
+            field price type double {}
+        }
+        field lines type array<line> {
+            indexing: summary
+            struct-field product  { indexing: attribute }
+            struct-field quantity { indexing: attribute }
+            struct-field price    { indexing: attribute }
+        }
+    }
+}
+{% endhighlight %}</pre>
+<p>
+  Every struct field used in <code>group</code> or <code>filter</code> must be an attribute.
+  Two example documents:
+</p>
+<pre class="no-transform">{% highlight json %}
+{"put": "id:order:order::o1", "fields": {"id": "o1", "lines": [
+    {"product": "bolt",   "quantity": 10, "price": 0.5},
+    {"product": "wrench", "quantity": 1,  "price": 25.0},
+    {"product": "drill",  "quantity": 1,  "price": 90.0}]}}
+{"put": "id:order:order::o2", "fields": {"id": "o2", "lines": [
+    {"product": "hammer", "quantity": 2,  "price": 15.0},
+    {"product": "saw",    "quantity": 1,  "price": 80.0}]}}
+{% endhighlight %}</pre>
+<p>
+  Grouping on <code>lines.product</code> with a filter on <code>lines.price</code>
+  counts, per product, the lines priced from 20 up to 100:
+</p>
+<pre class="no-transform">{% highlight vespa-yql %}
+select * from order where true limit 0 |
+    all(
+      group(lines.product) filter(range(20, 100, lines.price))
+      each(output(count()))
+    )
+{% endhighlight %}</pre>
+<p>
+  This gives <code>wrench: 1</code>, <code>drill: 1</code> and <code>saw: 1</code>.
+  The <code>bolt</code> and <code>hammer</code> lines are not counted,
+  since the filter sees the price of the same element as the product.
+</p>
+<p>
+  To count the matching lines over all documents instead of per product, group on a key that is
+  still evaluated per element but is the same for every element.
+  An arithmetic expression on a struct field is evaluated per element,
+  so <code>mul(lines.quantity, 0)</code> is <code>0</code> for every line.
+  All matching lines then end up in one group,
+  and <code>count()</code> is the total number of matching lines:
+</p>
+<pre class="no-transform">{% highlight vespa-yql %}
+select * from order where true limit 0 |
+    all(
+      group(mul(lines.quantity, 0)) filter(range(20, 100, lines.price))
+      each(output(count()))
+    )
+{% endhighlight %}</pre>
+<p>
+  This gives a single group with count <code>3</code>.
+  Other aggregators work the same way on this level, so <code>sum(lines.price)</code>
+  gives the summed price of the matching lines.
+</p>
+<p>
+  The same level nested under a group per document gives the count per document:
+</p>
+<pre class="no-transform">{% highlight vespa-yql %}
+select * from order where true limit 0 |
+    all(
+      group(id)
+      each(
+        all(
+          group(mul(lines.quantity, 0)) filter(range(20, 100, lines.price))
+          each(output(count()))
+        )
+      )
+    )
+{% endhighlight %}</pre>
+<p>
+  This gives <code>2</code> for <code>o1</code> and <code>1</code> for <code>o2</code>.
+  A document with no matching lines has no inner group.
+</p>
+<p>
+  Note that the query selects documents and the grouping filter selects elements,
+  independently of each other.
+  A document matched through <code>sameElement</code> still contributes all its elements
+  to the grouping, not only the element that matched.
+  Also, every field referenced in the filter must belong to the same struct as the
+  <code>group</code> expression; a field from another struct or a single-valued field
+  is evaluated once for the whole document.
 </p>
 
 

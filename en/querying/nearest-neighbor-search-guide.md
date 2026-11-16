@@ -70,7 +70,7 @@ the dataset files and create a JSONL formatted feed file with Vespa put operatio
 The [schema)(schemas.html) is covered in the next section. 
 The number of unique `tags` is used as a proxy for the popularity of the track. 
 
-<pre style="display:none" data-test="file" data-path="create-vespa-feed.py">
+<pre style="display:none" data-test="file" data-path="create-vespa-feed.py">{% highlight python %}
 import os
 import sys
 import json
@@ -122,7 +122,7 @@ for root, dirs, files in os.walk(directory):
 sorted_files.sort()
 for filename in sorted_files:
     process_file(filename)
-</pre>
+{% endhighlight %}</pre>
 <div class="pre-parent">
   <button class="d-icon d-duplicate pre-copy-button" onclick="copyPreContent(this)"></button>
 <pre>{% highlight python%}
@@ -214,7 +214,7 @@ For this application, we define a `track` document type.
 
 Write the following to `app/schemas/track.sd`:
 
-<pre style="display:none" data-test="file" data-path="app/schemas/track.sd">
+<pre style="display:none" data-test="file" data-path="app/schemas/track.sd">{% highlight vespa-schema-language %}
 schema track {
 
     document track {
@@ -233,7 +233,7 @@ schema track {
             indexing: summary | index
         }
 
-        field tags type weightedset&lt;string&gt; {
+        field tags type weightedset<string> {
             indexing: summary | attribute
             attribute: fast-search
         }
@@ -245,7 +245,7 @@ schema track {
         }
     }
 
-    field embedding type tensor&lt;float&gt;(x[384]) {
+    field embedding type tensor<float>(x[384]) {
             indexing: input title | embed e5 |attribute | index
             attribute {
                 distance-metric: angular
@@ -284,8 +284,8 @@ schema track {
         match-features: distance(field, embedding)
 
         inputs {
-            query(q)  tensor&lt;float&gt;(x[384])
-            query(q1) tensor&lt;float&gt;(x[384])
+            query(q)  tensor<float>(x[384])
+            query(q1) tensor<float>(x[384])
         } 
 
         first-phase {
@@ -325,10 +325,10 @@ schema track {
         }
     }
 }
-</pre>
+{% endhighlight %}</pre>
 <div class="pre-parent">
   <button class="d-icon d-duplicate pre-copy-button" onclick="copyPreContent(this)"></button>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 schema track {
 
     document track {
@@ -347,7 +347,7 @@ schema track {
             indexing: summary | index
         }
 
-        field tags type weightedset&lt;string&gt; {
+        field tags type weightedset<string> {
             indexing: summary | attribute
             attribute: fast-search
         }
@@ -359,7 +359,7 @@ schema track {
         }
     }
 
-    field embedding type tensor&lt;float&gt;(x[384]) {
+    field embedding type tensor<float>(x[384]) {
             indexing: input title | embed e5 |attribute | index
             attribute {
                 distance-metric: angular
@@ -397,8 +397,8 @@ schema track {
         match-features: distance(field, embedding)
 
         inputs {
-            query(q)  tensor&lt;float&gt;(x[384])
-            query(q1) tensor&lt;float&gt;(x[384])
+            query(q)  tensor<float>(x[384])
+            query(q1) tensor<float>(x[384])
         }
 
         first-phase {
@@ -438,7 +438,7 @@ schema track {
         }
     }
 }
-</pre></div>
+{% endhighlight %}</pre></div>
 
 This document schema is explained in the [practical search performance guide](../performance/practical-search-performance-guide),
 the addition is the `embedding` field which is defined as a synthetic field outside of the document. This 
@@ -448,8 +448,8 @@ text embedding model (described in this [blog post](https://blog.vespa.ai/enhanc
 Note that the `closeness` rank-profile defines two
 query input tensors using [inputs](../reference/schemas/schemas.html#inputs). 
 
-<pre>
-field embedding type tensor&lt;float&gt;(x[384]) {
+<pre>{% highlight vespa-schema-language %}
+field embedding type tensor<float>(x[384]) {
     indexing: input title | embed e5 | attribute | index
     attribute {
         distance-metric: angular
@@ -461,7 +461,7 @@ field embedding type tensor&lt;float&gt;(x[384]) {
         }
     }
  }
-</pre>
+{% endhighlight %}</pre>
 
 See [Approximate Nearest Neighbor Search using HNSW Index](approximate-nn-hnsw)
 for an introduction to `HNSW` and the `HNSW` tuning parameters.
@@ -472,41 +472,41 @@ The [services.xml](../reference/applications/services/services.html) defines the
 the Vespa application — which services to run and how many nodes per service.
 Write the following to `app/services.xml`:
 
-<pre data-test="file" data-path="app/services.xml">
-&lt;?xml version="1.0" encoding="UTF-8"?&gt;
-&lt;services version="1.0"&gt;
+<pre data-test="file" data-path="app/services.xml">{% highlight xml %}
+<?xml version="1.0" encoding="UTF-8"?>
+<services version="1.0">
 
-    &lt;container id="default" version="1.0"&gt;
-        &lt;search/&gt;
-        &lt;document-api/&gt;
-        &lt;component id="e5" type="hugging-face-embedder"&gt;
-            &lt;transformer-model path="model/e5-small-v2-int8.onnx"/&gt;
-            &lt;tokenizer-model path="model/tokenizer.json"/&gt;
-        &lt;/component&gt;
-    &lt;/container&gt;
+    <container id="default" version="1.0">
+        <search/>
+        <document-api/>
+        <component id="e5" type="hugging-face-embedder">
+            <transformer-model path="model/e5-small-v2-int8.onnx"/>
+            <tokenizer-model path="model/tokenizer.json"/>
+        </component>
+    </container>
 
-    &lt;content id="tracks" version="1.0"&gt;
-        &lt;engine&gt;
-            &lt;proton&gt;
-                &lt;tuning&gt;
-                    &lt;searchnode&gt;
-                        &lt;requestthreads&gt;
-                            &lt;persearch&gt;4&lt;/persearch&gt;
-                        &lt;/requestthreads&gt;
-                    &lt;/searchnode&gt;
-                &lt;/tuning&gt;
-            &lt;/proton&gt;
-        &lt;/engine&gt;
-        &lt;redundancy&gt;1&lt;/redundancy&gt;
-        &lt;documents&gt;
-            &lt;document type="track" mode="index"&gt;&lt;/document&gt;
-        &lt;/documents&gt;
-        &lt;nodes&gt;
-            &lt;node distribution-key="0" hostalias="node1"&gt;&lt;/node&gt;
-        &lt;/nodes&gt;
-    &lt;/content&gt;
-&lt;/services&gt;
-</pre>
+    <content id="tracks" version="1.0">
+        <engine>
+            <proton>
+                <tuning>
+                    <searchnode>
+                        <requestthreads>
+                            <persearch>4</persearch>
+                        </requestthreads>
+                    </searchnode>
+                </tuning>
+            </proton>
+        </engine>
+        <redundancy>1</redundancy>
+        <documents>
+            <document type="track" mode="index"></document>
+        </documents>
+        <nodes>
+            <node distribution-key="0" hostalias="node1"></node>
+        </nodes>
+    </content>
+</services>
+{% endhighlight %}</pre>
 
 The default [query profile](query-profiles.html) can be used to override
 default query api settings for all queries.
@@ -514,12 +514,12 @@ default query api settings for all queries.
 The following enables [presentation.timing](../reference/api/query.html#presentation.timing) and
 renders `weightedset` fields as a JSON maps. 
 
-<pre data-test="file" data-path="app/search/query-profiles/default.xml">
-&lt;query-profile id=&quot;default&quot;&gt;
-    &lt;field name=&quot;presentation.timing&quot;&gt;true&lt;/field&gt;
-    &lt;field name=&quot;renderer.json.jsonWsets&quot;&gt;true&lt;/field&gt;
-&lt;/query-profile&gt;
-</pre>
+<pre data-test="file" data-path="app/search/query-profiles/default.xml">{% highlight xml %}
+<query-profile id="default">
+    <field name="presentation.timing">true</field>
+    <field name="renderer.json.jsonWsets">true</field>
+</query-profile>
+{% endhighlight %}</pre>
 
 The final step is to download embedding model files
 
@@ -730,13 +730,13 @@ weights. The inner product ranking score calculated by the `wand` query operator
 can be used in a ranking expression by the [rawScore(name)](../reference/ranking/rank-features.html#match-operator-scores)
 rank feature. 
 
-<pre>
+<pre>{% highlight vespa-schema-language %}
 rank-profile tags {
     first-phase {
         expression: rawScore(tags)
     }
 }
-</pre>
+{% endhighlight %}</pre>
 
 This query searches the track document type using a learned sparse *userProfile* representation, 
 performing a maximum inner product search over the `tags` weightedset field. 
@@ -1077,25 +1077,25 @@ See [searching attribute fields](../performance/practical-search-performance-gui
 The optimal performance for combining nearestNeighbor search with filtering, where the query term(s) does not influence ranking, is achieved
 using `rank: filter` in the schema (See [ranking expressions](../reference/ranking/ranking-expressions.html)):
 
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field popularity type int {
     indexing: summary | attribute
     rank: filter
     attribute: fast-search
 }
-</pre>
+{% endhighlight %}</pre>
 
 Matching against the popularity field does not influence ranking, and Vespa can use the most efficient posting
 list representation. Note that one can still access the value of
 the `popularity` attribute in [ranking expressions](../ranking/ranking-expressions-features.html). 
 
-<pre>
+<pre>{% highlight vespa-schema-language %}
 rank-profile popularity {
     first-phase {
         expression: attribute(popularity)
     }
 }
-</pre>
+{% endhighlight %}</pre>
 
 
 In the following example, since the `title` field does not have `rank: filter` one can instead
@@ -1331,7 +1331,7 @@ of the best hits from the two different retrieval strategies.
 The ranking is performed using the `hybrid` rank profile which serves as an example
 how to combine the different efficient retrievers. 
 
-<pre>
+<pre>{% highlight vespa-schema-language %}
 rank-profile hybrid inherits closeness {
         inputs {
             query(wTags) : 1
@@ -1354,7 +1354,7 @@ rank-profile hybrid inherits closeness {
             closeness(field, embedding)
         }
     }
-</pre>
+{% endhighlight %}</pre>
 
 The query returns the following result:
 
@@ -1825,11 +1825,11 @@ annotation when there are multiple `nearestNeighbor` operators in the same query
 to get the distance or closeness per query vector. Notice we use the `closeness-label` rank-profile defined
 in the schema:
 
-<pre>
+<pre>{% highlight vespa-schema-language %}
 rank-profile closeness-label inherits closeness {
     match-features: closeness(label, q) closeness(label, q1)
 }
-</pre>
+{% endhighlight %}</pre>
 
 <div class="pre-parent">
   <button class="d-icon d-duplicate pre-copy-button" onclick="copyPreContent(this)"></button>
@@ -1971,8 +1971,8 @@ compared with the labeled [closeness()](../reference/ranking/rank-features.html#
 Vespa also supports having multiple document side embedding fields, which also
 can be searched using multiple `nearestNeighbor` operators in the query.
 
-<pre>
-field embedding type tensor&lt;float&gt;(x[384]) {
+<pre>{% highlight vespa-schema-language %}
+field embedding type tensor<float>(x[384]) {
     indexing: attribute | index
     attribute {
         distance-metric: euclidean
@@ -1984,7 +1984,7 @@ field embedding type tensor&lt;float&gt;(x[384]) {
         }
     }
  }
- field embedding_two tensor&lt;float&gt;(x[768]) {
+ field embedding_two tensor<float>(x[768]) {
     indexing: attribute | index
     attribute {
         distance-metric: euclidean
@@ -1996,7 +1996,7 @@ field embedding type tensor&lt;float&gt;(x[384]) {
         }
     }
  }
-</pre>
+{% endhighlight %}</pre>
 
 ## Controlling filter behavior
 

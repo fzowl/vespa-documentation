@@ -6,15 +6,20 @@ redirect_from:
 - /en/cloud/archive-guide
 ---
 
-Vespa Cloud exports log data, heap dumps, and Java Flight Recorder sessions to
-storage buckets. The bucket system used will depend on which cloud provider is
-backing the zone your application is running in. AWS S3 will be used in the AWS
-zones, and Cloud Storage will be used in the GCP zones.
-
+Vespa Cloud exports log data, heap dumps, and Java Flight Recorder sessions to storage buckets.
 How to access and use the storage buckets is found in the documentation for the respective cloud providers:
 
  * [AWS S3](archive-guide-aws)
  * [Google Cloud Storage](archive-guide-gcp)
+ * [Azure Blob Storage](archive-guide-azure)
+
+{% include note.html content='Enclave users: Please see <a href="../enclave/archive.html">Vespa Cloud Enclave Log Archive</a>.' %}
+
+
+
+## TTL
+Time to live for all objects in the archive is 30 days.
+
 
 
 ## Examples
@@ -63,7 +68,7 @@ $ gsutil -u resonant-triode-123456 \
   gs://vespa-cloud-data-prod-gcp-us-central1-f-73770f/vespa-team/vespacloud-docsearch/default/h404a \
   .
 ```
-Use [zstd](https://facebook.github.io/zstd/) to decompress files:
+Use [zstd](https://github.com/meta/zstd) to decompress files:
 ```
 $ zstd -d *
 ```

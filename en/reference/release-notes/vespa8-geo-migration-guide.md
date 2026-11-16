@@ -10,7 +10,7 @@ this is a guide on how to migrate from Vespa 7 to Vespa 8 when using position fi
 The guide is relevant for applications having a `position` field in a schema.
 
 For the rest of this document, we assume a schema containing:
-```
+```vespa-schema-language
 field myfield type position {...}
 ```
 
@@ -72,7 +72,7 @@ Change from using the `pos.ll` / `pos.radius` / `pos.bb` / `pos.attribute` param
 pos.ll=63.4225N+10.3637E&pos.radius=5km
 ```
 to using [YQL](../../querying/query-language.html):
-```
+```vespa-yql
 where geoLocation(myfieldname, 63.5, 10.5, "5 km")
 ```
 

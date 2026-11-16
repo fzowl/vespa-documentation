@@ -53,7 +53,7 @@ A component that depends on another is considered to be a <em>consumer</em>.
 A component's dependencies is whatever its <code>@Inject</code>-annotated
 constructor declares as arguments. E.g. the component:
 </p>
-<pre>
+<pre>{% highlight java %}
 package com.yahoo.example;
 import com.yahoo.component.annotation.Inject;
 
@@ -65,18 +65,18 @@ public class MyComponent {
     public MyComponent(MyDependency dependency) {
         this.dependency = dependency;
     }
-}  
-</pre>
+}
+{% endhighlight %}</pre>
 <p>
 has a dependency on the class <code>com.yahoo.example.MyDependency</code>.
 To deploy <code>MyComponent</code>, register <code>MyDependency</code> in <code>services.xml</code>:
 </p>
-<pre>
-&lt;container version="1.0"&gt;
-    &lt;component id="com.yahoo.example.MyComponent" /&gt;
-    &lt;component id="com.yahoo.example.MyDependency" /&gt;
-&lt;/container&gt;
-</pre>
+<pre>{% highlight xml %}
+<container version="1.0">
+    <component id="com.yahoo.example.MyComponent" />
+    <component id="com.yahoo.example.MyDependency" />
+</container>
+{% endhighlight %}</pre>
 <p>
 Upon deployment, the Container will first instantiate <code>MyDependency</code>,
 and then pass that instance to the constructor of <code>MyComponent</code>.
@@ -113,11 +113,11 @@ Tried to load class directly, since no bundle was found for spec:
 com.yahoo.example.Dependency
 </pre>
 <p>To remedy, specify the jar file (i.e. bundle) with the component:</p>
-<pre>
-&lt;container version="1.0"&gt;
-    &lt;component id="com.yahoo.example.MyDependency" bundle="the name in &lt;artifactId&gt; in your pom.xml" /&gt;
-&lt;/container&gt;
-</pre>
+<pre>{% highlight xml %}
+<container version="1.0">
+    <component id="com.yahoo.example.MyDependency" bundle="the name in <artifactId> in your pom.xml" />
+</container>
+{% endhighlight %}</pre>
 
 
 
@@ -129,19 +129,19 @@ Since the number and type of strategies is unknown when implementing the consume
 it is impossible to make a constructor that lists all of them.
 This is where the <code>ComponentRegistry</code> comes into play. E.g. the following component:
 </p>
-<pre>
+<pre>{% highlight java %}
 package com.yahoo.example;
 
 public class MyComponent {
 
-    private final ComponentRegistry&lt;Strategy&gt; strategies;
+    private final ComponentRegistry<Strategy> strategies;
 
     @Inject
-    public MyComponent(ComponentRegistry&lt;Strategy&gt; strategies) {
+    public MyComponent(ComponentRegistry<Strategy> strategies) {
         this.strategies = strategies;
     }
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
 declares a dependency on the set of all components registered in <code>services.xml</code>
 that are instances of the class <code>Strategy</code> (including subclasses).
@@ -165,12 +165,12 @@ There are cases where a component cannot be directly injected to its consumers -
   For these situations, JDisc supports injection, and optional deconstruction,
   via its <code>Provider</code> interface:
 </p>
-<pre>
-public interface Provider&lt;T&gt; {
+<pre>{% highlight java %}
+public interface Provider<T> {
     T get();
     void deconstruct();
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
 <code>get()</code> is called by JDisc each time it needs to instantiate the specific component type.
 <code>deconstruct()</code> is only called after reconfiguring the system with a new application,
@@ -179,11 +179,11 @@ where the current provider instance is either removed or replaced due to modifie
 Following the earlier example, declare a provider for the <code>MyDependency</code> class,
 that returns a new instance for each consumer:
 </p>
-<pre>
+<pre>{% highlight java %}
 package com.yahoo.example;
 import com.yahoo.container.di.componentgraph.Provider;
 
-public class MyDependencyProvider implements Provider&lt;MyDependency&gt; {
+public class MyDependencyProvider implements Provider<MyDependency> {
 
     @Override
     public MyDependency get() {
@@ -193,18 +193,18 @@ public class MyDependencyProvider implements Provider&lt;MyDependency&gt; {
     @Override
     public void deconstruct() { }
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   Using this provider, <code>services.xml</code> has two instances of <code>MyComponent</code>,
   each getting a unique instance of <code>MyDependency</code>:
 </p>
-<pre>
-&lt;container version="1.0"&gt;
-    &lt;component id="com.yahoo.example.MyDependencyProvider" /&gt;
-    &lt;component id="my-component-1" class="com.yahoo.example.MyComponent" /&gt;
-    &lt;component id="my-component-2" class="com.yahoo.example.MyComponent" /&gt;
-&lt;/container&gt;
-</pre>
+<pre>{% highlight xml %}
+<container version="1.0">
+    <component id="com.yahoo.example.MyDependencyProvider" />
+    <component id="my-component-1" class="com.yahoo.example.MyComponent" />
+    <component id="my-component-2" class="com.yahoo.example.MyComponent" />
+</container>
+{% endhighlight %}</pre>
 <p>
 Upon deployment, the Container will first instantiate <code>MyDependencyProvider</code>,
 and then invoke <code>MyDependencyProvider.get()</code> for each instantiation of <code>MyComponent</code>.

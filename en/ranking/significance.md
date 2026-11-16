@@ -55,12 +55,12 @@ In a *global significance model*, significance values are shared across nodes an
 ### Significance values in a query
 
 Document frequency and document count can be specified in YQL, e.g.:
-```sql
+```vespa-yql
 select * from example where content contains ({documentFrequency: {frequency: 13, count: 101}}"colors")
 ```
 
 Alternatively, significance values can be specified in YQL directly and used instead of computed IDF values, e.g.:
-```sql
+```vespa-yql
 select * from example where content contains ({significance:0.9}"neurotransmitter")
 ```
 
@@ -105,7 +105,7 @@ The order in which the models are specified determines the model precedence, see
 In addition to adding models in [services.xml](../reference/applications/services/search.html#significance),
 the `significance` feature must be enabled in the [`rank-profile` section of the schema](../reference/schemas/schemas.html#significance), e.g.
 
-```xml
+```vespa-schema-language
 schema example {
     document example {
         field content type string {
@@ -158,7 +158,7 @@ The significance model file is a JSON file that contains term document frequenci
 }
 ```
 
-A significance model file can be compressed with [zstandard](https://facebook.github.io/zstd/)
+A significance model file can be compressed with [zstandard](https://github.com/meta/zstd)
 when included in the application package or made available via a URL.
 
 Vespa provides a <a href="../reference/operations/self-managed/tools.html#vespa-significance">CLI tool</a> for generating significance model files from Vespa documents.

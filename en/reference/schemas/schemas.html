@@ -82,6 +82,8 @@ Names are <em>identifiers</em>, they must match <code>["a"-"z","A"-"Z", "_"]["a"
                 <a href="#distance-metric">distance-metric</a>
             <a href="#bolding">bolding</a>
             <a href="#dictionary">dictionary</a>
+            <a href="#explanation-field">explanation</a>
+            <a href="#fast-search-map-field">fast-search-map-field</a>
             <a href="#id">id</a>
             <a href="#index">index</a>
                 <a href="#index-hnsw">hnsw</a>
@@ -106,13 +108,14 @@ Names are <em>identifiers</em>, they must match <code>["a"-"z","A"-"Z", "_"]["a"
             <a href="#summary-to">summary-to <b>DEPRECATED</b></a>
             <a href="#weight">weight</a>
         <a href="#compression">compression</a>
-    <a href="#index">index</a>
+    <a href="#explanation-schema">explanation</a>
     <a href="#field">field</a>
     <a href="#fieldset">fieldset</a>
     <a href="#rank-profile">rank-profile</a>
         <a href="#diversity">diversity</a>
             <a href="#diversity-attribute">attribute</a>
             <a href="#diversity-min-groups">min-groups</a>
+        <a href="#explanation-rank-profile">explanation</a>
         <a href="#match-phase">match-phase</a>
             <a href="#match-phase-attribute">attribute</a>
             <a href="#match-phase-order">order</a>
@@ -168,6 +171,7 @@ Names are <em>identifiers</em>, they must match <code>["a"-"z","A"-"Z", "_"]["a"
             <a href="#weakand-adjust-target">adjust-target</a>
             <a href="#weakand-allow-drop-all">allow-drop-all</a>
         <a href="#rank-profile">rank-profile (inner)</a>
+    <a href="#index">index</a>
     <a href="#constant">constant</a>
     <a href="#onnx-model">onnx-model</a>
     <a href="#stemming">stemming</a>
@@ -185,11 +189,11 @@ Names are <em>identifiers</em>, they must match <code>["a"-"z","A"-"Z", "_"]["a"
 <p>The root element of schemas.
 A schema describes a type of data and what we should compute over it.
 A schema must be defined in a file named <code>[schema-name].sd</code>.</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 schema [name] inherits [name] {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 
 <p>The <code>inherits</code> attribute is optional.
 If a schema is inherited, this schema will include all the constructs of it as if they
@@ -205,6 +209,10 @@ The document type in this must declare that it inherits the document type of the
 <tr><td><a href="#document">document</a></td>
   <td>One</td>
   <td>A document type defined in this schema</td>
+</tr>
+<tr><td><a href="#explanation-schema">explanation</a></td>
+  <td>Zero or one</td>
+  <td>An explanation for agents of what this schema contains</td>
 </tr>
 
 <tr><td><a href="#field">field</a></td>
@@ -269,11 +277,11 @@ The document type in this must declare that it inherits the document type of the
   Contained in <a href="#schema">schema</a> and describes a document type.
   This can also be the root of the schema, if the document is not to be queried directly.
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 document [name] inherits [name-list] {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   The document name is optional; it defaults to the containing <code>schema</code>
  element's name. If there is no containing <code>schema</code> element, the document name is required. If the document with a name is defined inside a schema, the document name must match the <code>schema</code> element's name. The reference to <em>document type</em> in the documentation refers to the document name defined here.
@@ -312,6 +320,28 @@ document [name] inherits [name-list] {
 
 
 
+<h2 id="explanation-schema">explanation (on schema)</h2>
+
+<p>Contained in <a href="#schema">schema</a> and provides an explanation of this schema for agents.
+The explanation will be included in the skill explaining to agents how to query this data,
+see <a href="../../rag/agent-ready-schemas">agent-ready schemas</a>.</p>
+
+<pre>{% highlight vespa-schema-language %}
+explanation {
+  This contains ...
+}
+{% endhighlight %}</pre>
+
+or single line:
+
+<pre>{% highlight vespa-schema-language %}
+explanation: This contains ...
+{% endhighlight %}</pre>
+
+<p>Explanations are not inherited.</p>
+
+
+
 <h2 id="struct">struct</h2>
 <p>
 Contained in <a href="#document">document</a>.
@@ -319,11 +349,11 @@ Defines a composite type.
 A struct consists of zero or more fields that the user can access together as one.
 The struct has to be defined before it is used as a type in a field specification.
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 struct [name] {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 <p>The body of a struct is optional and may contain:</p>
 <table class="table">
 <thead>
@@ -348,11 +378,11 @@ or
 Defines a named value with a type and (optionally) how this field
 should be stored, indexed, searched, presented, and how it should influence ranking.
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field [name] type [type-name] {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 Do not use names that are used for other purposes in the indexing language
 or other places in the schema file. Reserved names are:
 <ul>
@@ -412,13 +442,13 @@ The <em>type</em> attribute is mandatory - supported types:
         Also used to create an array field of the given <a href="#struct">struct type</a>.
         The struct type must be defined separately. Example:
       </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 struct person {
     field first_name type string {}
     field last_name  type string {}
 }
 
-field people type array&lt;person&gt; {
+field people type array<person> {
     indexing: summary
     summary:  matched-elements-only
     struct-field first_name {
@@ -426,7 +456,7 @@ field people type array&lt;person&gt; {
         attribute: fast-search
     }
 }
-</pre>
+{% endhighlight %}</pre>
       <p>
         The entire <em>people</em> field is part of the document summary.
         The <a href="#struct-field">struct field</a> <em>first_name</em> is defined as an <em>attribute</em> for searching,
@@ -481,11 +511,11 @@ field people type array&lt;person&gt; {
 
   <tr><th>bool</th>
     <td><p id="bool">Use for boolean values.</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field alive type bool {
     indexing: summary | attribute
 }
-</pre>
+{% endhighlight %}</pre>
       <table class="table">
         <thead></thead><tbody>
       <tr>
@@ -508,11 +538,11 @@ field alive type bool {
 
   <tr><th>byte</th>
     <td><p id="byte">Use for single 8-bit numbers.</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field smallnumber type byte {
     indexing: summary | attribute
 }
-</pre>
+{% endhighlight %}</pre>
       <table class="table">
         <thead></thead><tbody>
       <tr>
@@ -531,11 +561,11 @@ field smallnumber type byte {
 
   <tr><th>double</th>
     <td><p id="double">Use for high precision floating point numbers (64-bit IEEE 754 double).</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field mydouble type double {
     indexing: summary | attribute
 }
-</pre>
+{% endhighlight %}</pre>
       <table class="table">
         <thead></thead><tbody>
       <tr>
@@ -554,11 +584,11 @@ field mydouble type double {
 
   <tr><th>float</th>
     <td><p id="float">Use for floating point numbers (32-bit IEEE 754 float).</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field myfloat type float {
     indexing: summary | attribute
 }
-</pre>
+{% endhighlight %}</pre>
       <table class="table">
         <thead></thead><tbody>
       <tr>
@@ -577,11 +607,11 @@ field myfloat type float {
 
   <tr><th>int</th>
     <td><p id="int">Use for single 32-bit integers.</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field release_year type int {
     indexing: summary | attribute
 }
-</pre>
+{% endhighlight %}</pre>
       <table class="table">
         <thead></thead><tbody>
       <tr>
@@ -600,11 +630,11 @@ field release_year type int {
 
   <tr><th>long</th>
     <td><p id="long">Use for single 64-bit integers.</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field bignumber type long {
     indexing: summary | attribute
 }
-</pre>
+{% endhighlight %}</pre>
       <table class="table">
         <thead></thead><tbody>
       <tr>
@@ -629,13 +659,13 @@ field bignumber type long {
         Example of a map of primitive types,
         where the <em>key</em> and <em>value</em> fields are specified as <em>attributes</em>:
       </p>
-<pre>
-field my_map type map&lt;string, int&gt; {
+<pre>{% highlight vespa-schema-language %}
+field my_map type map<string, int> {
     indexing: summary
     struct-field key   { indexing: attribute }
     struct-field value { indexing: attribute }
 }
-</pre>
+{% endhighlight %}</pre>
       <p>
         Note that a Vespa map entry is handled as a <em>struct</em>
         with a <em>key</em> and <em>value</em> field
@@ -644,14 +674,14 @@ field my_map type map&lt;string, int&gt; {
         The full <em>my_map</em> field is configured into the document summary.
       </p>
       <p>A more complex example is a map of struct:</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 struct person {
     field first_name type string {}
     field last_name  type string {}
     field age        type int {}
 }
 
-field identities type map&lt;string, person&gt; {
+field identities type map<string, person> {
     indexing: summary
     summary:  matched-elements-only
     struct-field key {
@@ -667,7 +697,7 @@ field identities type map&lt;string, person&gt; {
         attribute: fast-search
     }
 }
-</pre>
+{% endhighlight %}</pre>
       <p>
         This example illustrates that the struct elements are configured individually -
         there is no field configuration for <em>age</em> -
@@ -684,8 +714,12 @@ field identities type map&lt;string, person&gt; {
         to reduce the amount of data in the document summary.
         </p>
       <p>
-        <a href="/en/performance/feature-tuning.html#when-to-use-fast-search-for-attribute-fields">fast-search</a>
-        is used to make query access faster by creating an index structure for lookups.
+        The <a href="/en/performance/feature-tuning.html#when-to-use-fast-search-for-attribute-fields">fast-search</a>
+        setting is used to make query access faster by creating an index structure for lookups.
+        However, using the <a href="/en/reference/querying/yql.html#sameelement">sameElement</a> operator
+        to require matches in the same map entry can still be slow since this boils down to
+        to searching two arrays and taking the intersection of the matching indices.
+        A <a href="#fast-search-map-field">fast-search map field</a> can offer faster map lookup if needed.
       </p>
       <p>
         As an alternative to a map,
@@ -693,8 +727,10 @@ field identities type map&lt;string, person&gt; {
       </p>
       <p>Restrictions:</p>
       <ul>
-        <li>Map of struct or primitive types do not support <a href="../../basics/ranking.html">ranking features</a>
-          and can only be used for matching and filtering.</li>
+        <li>Maps of struct or primitive types do not support most <a href="../../basics/ranking.html">ranking features</a>.
+        When using a <a href="#fast-search-map-field">fast-search map field</a>, make sure to use ranking features for the fast-search map field
+        and not the containing map field.
+        </li>
         <li>All map types can be fed, retrieved, and used in document summaries.</li>
         <li>Some map types can be searched in <a href="../applications/services/content.html#document">indexed search mode</a>,
         while all map types can be searched in <a href="../../performance/streaming-search.html">streaming search</a>.
@@ -732,11 +768,11 @@ field identities type map&lt;string, person&gt; {
         Used to filter and/or rank documents by distance to a position in the query,
         see <a href="../../querying/geo-search.html">Geo search</a>.
       </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field location type position {
     indexing: attribute
 }
-</pre>
+{% endhighlight %}</pre>
       <table class="table">
         <thead></thead><tbody>
       <tr>
@@ -764,7 +800,7 @@ field location type position {
         Predicate fields are not supported in
         <a href="../../performance/streaming-search.html#differences-in-streaming-search">streaming search</a>.
       </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field predicate_field type predicate {
     indexing: attribute
     index {
@@ -774,7 +810,7 @@ field predicate_field type predicate {
         dense-posting-list-threshold: 0.25
     }
 }
-</pre>
+{% endhighlight %}</pre>
       <table class="table">
         <thead></thead><tbody>
       <tr>
@@ -793,11 +829,11 @@ field predicate_field type predicate {
 
   <tr><th>raw</th>
     <td><p id="raw">Use for binary data</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field rawfield type raw {
     indexing: summary | attribute
 }
-</pre>
+{% endhighlight %}</pre>
       <table class="table">
         <thead></thead><tbody>
       <tr>
@@ -824,11 +860,11 @@ field rawfield type raw {
         Reference fields are not supported in
         <a href="../../performance/streaming-search.html#differences-in-streaming-search">streaming search</a>.
       </p>
-<pre>
-field artist_ref type reference&lt;artist&gt; {
+<pre>{% highlight vespa-schema-language %}
+field artist_ref type reference<artist> {
     indexing: attribute
 }
-</pre>
+{% endhighlight %}</pre>
       The reference is the <a href="../../schemas/documents.html">document ID</a> of the document-type instance.
       References are used to join documents in a <a href="../../schemas/parent-child.html">parent-child relationship</a>.
       A reference can only be made to <a href="../applications/services/content.html#document">global</a> documents.
@@ -872,11 +908,11 @@ field artist_ref type reference&lt;artist&gt; {
         <a href="https://github.com/vespa-engine/vespa/blob/master/vespajlib/src/main/java/com/yahoo/text/Text.java">
           com.yahoo.text.Text</a>
       </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field surname type string {
     indexing: summary | index
 }
-</pre>
+{% endhighlight %}</pre>
       <table class="table">
         <thead></thead><tbody>
       <tr>
@@ -908,7 +944,7 @@ field surname type string {
         Create a <a href="#struct">struct type</a> inside the document definition and
         declare the struct field in a document or struct using the struct type name as the field type:
       </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 struct person {
     field first_name type string {}
     field last_name type string {}
@@ -916,7 +952,7 @@ struct person {
 field my_person type person {
     indexing: summary
 }
-</pre>
+{% endhighlight %}</pre>
       Restrictions:
       <ul>
         <li>Struct fields can <strong>not</strong> be searched in indexed search mode
@@ -956,15 +992,15 @@ field my_person type person {
       the <a href="../../ranking/tensor-user-guide.html">tensor user guide</a> and
       the <a href="document-json-format.html#tensor">JSON feed format</a>.
     </p>
-<pre>
-field tensorfield type tensor&lt;float&gt;(x{},y{}) {
+<pre>{% highlight vespa-schema-language %}
+field tensorfield type tensor<float>(x{},y{}) {
     indexing: attribute | summary
 }
 
-field tensorfield type tensor&lt;float&gt;(x[2],y[2]) {
+field tensorfield type tensor<float>(x[2],y[2]) {
     indexing: attribute | summary
 }
-</pre>
+{% endhighlight %}</pre>
       <table class="table">
         <thead></thead><tbody>
       <tr>
@@ -1044,17 +1080,17 @@ query=sourceurl.hostname:slashdot
           <strong>Aliasing</strong> also works differently for URL fields - you
           are allowed to create aliases both to the index (as usual) and to the
           components of it. Use
-<pre>
+<pre>{% highlight vespa-schema-language %}
 alias [component]: [alias]
-</pre>
+{% endhighlight %}</pre>
           to create an alias for a component. For example, given this field:
-          <pre>
+          <pre>{% highlight vespa-schema-language %}
 field surl type uri {
     indexing: summary | index
     alias: url
     alias hostname: site
 }
-</pre>
+{% endhighlight %}</pre>
           <p>
             a search in "surl" and "url" will search in the entire url,
             while "surl.hostname" or "site" will search the hostname.
@@ -1075,11 +1111,11 @@ field surl type uri {
     <td><p id="weightedset">
       Use to create a multivalue field of the element type,
       where each element is assigned a signed 32-bit integer weight.
-      <pre>
-field tag type weightedset&lt;string&gt; {
+      <pre>{% highlight vespa-schema-language %}
+field tag type weightedset<string> {
     indexing: attribute | summary
 }
-</pre>
+{% endhighlight %}</pre>
       <p>
       The element type can be one of the following primitive types: byte, int, long, and string.
       </p>
@@ -1144,22 +1180,22 @@ The body of a field is optional for <a href="#schema">schema</a>,
       Make an index or attribute available in queries under an additional name.
       This has minimal performance impact and can safely be added to running applications. Example:
     </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field artist type string {
     alias: artist_name
 }
-</pre>
+{% endhighlight %}</pre>
     <p>
       <code>alias</code> works for primitive types, i.e, types you can set <code>indexing</code> on like <code>string</code>.
       Composite types are not supported, the below will throw an error when deploying:
     </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 document ppl {
     struct person {
         field first_name type string {}
         field last_name  type string {}
     }
-    field p type array&lt;person&gt; {
+    field p type array<person> {
         struct-field first_name {
             indexing: attribute
         }
@@ -1169,7 +1205,7 @@ document ppl {
         alias: members
     }
 }
-</pre>
+{% endhighlight %}</pre>
   </td>
 </tr>
 
@@ -1182,6 +1218,18 @@ document ppl {
   <td>Zero to one</td>
   <td><p id="field-bolding">Specifies whether the content of this field should be bolded.
     Only supported for <a href="#indexing-index">index</a> fields of type string or array&lt;string&gt;.</p></td>
+</tr>
+
+<tr><td><a href="#explanation-field">explanation</a></td>
+  <td>Zero to one</td>
+  <td><p id="field-explanation">An explanation of this field for agents.</p></td>
+</tr>
+
+<tr><td><a href="#fast-search-map-field">fast-search-map-field</a></td>
+  <td>Zero to many</td>
+  <td><p id="field-fast-search-map-field">Define a synthetic, map-like attribute from this field
+    that allows for faster lookups.
+    Only supported for certain fields of type array&lt;struct&gt; and map.</p></td>
 </tr>
 
 <tr><td><a href="#id">id</a></td>
@@ -1301,11 +1349,11 @@ indexed, searched, presented, and how it should influence ranking.
 The field in which this struct field is contained must be of
 type struct or a collection of type struct:
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 struct-field [name] {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 <p>The body of a struct field is optional and may contain the following elements:</p>
 <table class="table">
   <thead>
@@ -1351,20 +1399,20 @@ struct-field [name] {
   Also see the <a href='../../learn/faq#must-all-fields-in-a-fieldset-have-compatible-type-and-matching-settings'>FAQ</a>
   for a discussion of what happens when using different types/match settings." %}
 <p>A fieldset groups fields together for searching:</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 fieldset myfieldset {
     fields: a,b,c
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   Create a fieldset named <code>default</code> to be used as the default
   (i.e., when not specified in the query):
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 fieldset default {
     fields: a,b,c
 }
-</pre>
+{% endhighlight %}</pre>
 <p>See <a href="../../querying/query-api.html#fieldset">example queries</a>.</p>
 <p>
   The fields in the fieldset should be as similar as possible in terms of indexing clause and <a href="#match">match mode</a>.
@@ -1372,23 +1420,23 @@ fieldset default {
   Having different match modes for the fields in the fieldset generates a warning during application deployment.
   If specific match settings for the fieldset are needed, such as <em>exact</em>, specify it using <em>match</em>:
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 fieldset myfieldset {
     fields: a,b,c
     match {
         exact
     }
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   Use <a href="#query-command">query-commands</a> in the field set to set search settings. Example:
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 fieldset myfieldset {
     fields: a,b,c
     query-command:"exact @@"
 }
-</pre>
+{% endhighlight %}</pre>
 <p>Adding a fieldset will not create extra index structures in memory / on disk; it is just a mapping.</p>
 <p>
   Note that document frequency is aggregated across all member fields when matching a fieldset,
@@ -1407,11 +1455,11 @@ fieldset myfieldset {
 Contained in <a href="#document">document</a>.
 If a compression level is set within this element,
 <strong>lz4</strong> compression is enabled for whole documents.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 compression {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 The body of a compression specification is optional and may contain:
 <table class="table">
   <thead>
@@ -1452,11 +1500,11 @@ settings which can be
 
 <p>Whether defined inline in the schema or in a separate .profile file, the syntax of a rank profile is</p>
 
-<pre>
+<pre>{% highlight vespa-schema-language %}
 rank-profile [name] inherits [rank-profile1], [rank-profile2], ...  {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 
 <p>The <code>inherits</code> list is optional and may contain the name of other rank profiles
 in this schema or one it inherits.
@@ -1473,6 +1521,10 @@ Inheriting multiple profiles that define the same elements leads to an error at 
 <tr><td><a href="#diversity">diversity</a></td>
   <td>Zero or one</td>
   <td>Specification of required diversity between the different phases.</td>
+</tr>
+<tr><td><a href="#explanation-rank-profile">explanation</a></td>
+  <td>Zero or one</td>
+  <td>An explanation of the usage of this profile for agents.</td>
 </tr>
 <tr><td><a href="#strict">strict</a></td>
   <td>Zero or one</td>
@@ -1816,13 +1868,13 @@ first-phase score.</p>
   See also <a href="../../performance/graceful-degradation.html#match-phase-degradation">graceful degradation</a>
   and <a href="../../querying/result-diversity#match-phase-diversity">result diversity</a>.
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 match-phase {
     attribute: [numeric single value attribute]
     order: [ascending | descending]
     total-max-hits: [integer]
 }
-</pre>
+{% endhighlight %}</pre>
 <table class="table">
 <thead>
   <tr><th>Name</th><th>Description</th></tr>
@@ -1904,12 +1956,12 @@ A document is considered a candidate if:
     This is computed by the <em>max-hits</em>
     of the phase divided by <a href="#diversity-min-groups">min-groups</a></li>
 </ul>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 diversity {
     attribute: [attribute name]
     min-groups: [integer]
 }
-</pre>
+{% endhighlight %}</pre>
 <table class="table">
   <thead>
     <tr><th>Name</th><th>Description</th></tr>
@@ -1936,6 +1988,39 @@ diversity {
 
 
 
+<h2 id="explanation-rank-profile">explanation (on rank-profile)</h2>
+
+<p>Contained in <a href="#rank-profile">rank-profile</a> and provides an explanation of this rank profile for agents.
+The explanation will be included in the skill explaining to agents how to query this data,
+see <a href="../../rag/agent-ready-schemas">agent-ready schemas</a>.</p>
+
+<pre>{% highlight vespa-schema-language %}
+explanation {
+  This can be used to ...
+
+  @input query(myFeature) use this to ...
+}
+{% endhighlight %}</pre>
+
+or single line:
+
+<pre>{% highlight vespa-schema-language %}
+explanation: This can be used to ...
+{% endhighlight %}</pre>
+
+<p>Explanations are not inherited.</p>
+
+<p>The <code>@input</code> tag lets you optionally supply explanations to the inputs of the profile.
+Inputs must come at the end of the explanation. The feature name after <code>@input</code> matches the name in the
+<a href="#inputs">inputs</a> block (so can be written with or without the "query" wrapping).
+This information is provided automatically and does not need to be repeated in explanations:</p>
+<ul>
+  <li>type</li>
+  <li>the default value (if any)</li>
+</ul>
+
+
+
 <h2 id="firstphase-rank">first-phase</h2>
 <p>
 Contained in <a href="#rank-profile">rank-profile</a>.
@@ -1946,11 +2031,11 @@ phased ranking with Vespa</a>.
 This is the initial ranking performed on all matching documents;
 you should therefore avoid doing computationally expensive relevancy calculations here.
 By default, this will use the ranking feature <code>nativeRank</code>.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 first-phase {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 The body of a first-phase ranking statement consists of:
 <table class="table">
 <thead>
@@ -1996,26 +2081,26 @@ Contained in <a href="#firstphase-rank">first-phase</a> or
 Specify a <a href="../ranking/ranking-expressions.html">ranking expression</a>.
 The expression can either be written directly or loaded from a file.
 When writing it directly, the syntax is:
-<pre>
+<pre>{% highlight vespa-schema-language %}
 expression: [ranking expression]
-</pre>
+{% endhighlight %}</pre>
 or
-<pre>
+<pre>{% highlight vespa-schema-language %}
 expression {
     [ranking expression]
     [ranking expression]
     [ranking expression]
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
 The second format is primarily a convenience feature when using long expressions, enabling them
 to be split over multiple lines.
 </p><p>
 Expressions can also be loaded from a separate file. This is useful when dealing with the long
 expressions generated by e.g. MLR. The syntax is:
-<pre>
+<pre>{% highlight vespa-schema-language %}
 expression: file:[path-to-expressionfile]
-</pre>
+{% endhighlight %}</pre>
 <p>
 The path is relative to the location of the schema definition file.
 The file itself must end with <code>.expression</code>. This suffix is optional in the schema.
@@ -2032,16 +2117,16 @@ Both refer to a file called <code>mlrranking.expression</code> in the <em>schema
 Contained in <a href="#rank-profile">rank-profile</a>.
 List of extra <a href="../ranking/rank-features.html">rank features</a> to be dumped
 when using the query-argument <a href="../api/query.html#ranking.listfeatures">rankfeatures</a>.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 rank-features: [feature] [feature]
-</pre>
+{% endhighlight %}</pre>
 or
-<pre>
+<pre>{% highlight vespa-schema-language %}
 rank-features {
     [feature]
     [feature]
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
 Any number of ranking features can be listed on each line, separated by space.
 </p>
@@ -2063,11 +2148,11 @@ but declaring inputs in the profile needing them is usually preferable.</p>
 
 <p>Inputs are inherited from inherited profiles.</p>
 
-<pre>
+<pre>{% highlight vespa-schema-language %}
 inputs {
     name [type]? (: value)?
 }
-</pre>
+{% endhighlight %}</pre>
 <table class="table">
 <thead>
 <tr>
@@ -2096,14 +2181,14 @@ inputs {
 
 <p>Input examples:</p>
 
-<pre>
+<pre>{% highlight vespa-schema-language %}
 inputs {
     myDouble: 0.5
     query(myOtherDouble) double
     query(myArray) tensor(x[3])
     query(myMap) tensor(key{}):{key1: 1.0, key2: 2.0}
 }
-</pre>
+{% endhighlight %}</pre>
 
 
 
@@ -2114,11 +2199,11 @@ List of constants available in ranking expressions, resolved and optimized at co
 
 <p>Constants are inherited from inherited profiles, and from the schema itself.</p>
 
-<pre>
+<pre>{% highlight vespa-schema-language %}
 constants {
     name [type]?: value|file:[path]
 }
-</pre>
+{% endhighlight %}</pre>
 <table class="table">
 <thead>
 <tr>
@@ -2151,15 +2236,15 @@ and end with <code>.json</code>. The file may be lz4 compressed, in which case t
 
 <p>Constant examples:</p>
 
-<pre>
+<pre>{% highlight vespa-schema-language %}
 constants {
     myDouble: 0.5
     constant(myOtherDouble) double: 0.6
     constant(myArray) tensor(x[3]):[1, 2, 3]
-    constant(myMap) tensor(key{}]):{key1: 1.0, key2: 2.0}
+    constant(myMap) tensor(key{}):{key1: 1.0, key2: 2.0}
     constant(myLargeTensor) tensor(x[10000]): file:constants/myTensor.json.lz4
 }
-</pre>
+{% endhighlight %}</pre>
 
 
 
@@ -2193,23 +2278,23 @@ rank-properties {
 Contained in <a href="#rank-profile">rank-profile</a>.
 Define a named function that can be referenced as a part of the ranking expression, or (if having no arguments) as a feature.
 A function accepts any number of arguments.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 function [name]([arg1], [arg2], [arg3]) {
-    expression: &hellip;
+    expression: …
 }
-</pre>
+{% endhighlight %}</pre>
 or
-<pre>
+<pre>{% highlight vespa-schema-language %}
 function [name] ([arg1], [arg2], [arg3]) {
     expression {
         [ranking expression]
         [ranking expression]
-        &hellip;
+        …
 }
-</pre>
+{% endhighlight %}</pre>
 Note that the parenthesis is required after the name.
 A rank-profile example is shown below:
-<pre>
+<pre>{% highlight vespa-schema-language %}
 rank-profile default inherits default {
     function myfeature() {
         expression: fieldMatch(title) + freshness(timestamp)
@@ -2226,7 +2311,7 @@ rank-profile default inherits default {
     }
     summary-features: myfeature
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
 You can not include functions that accept arguments in summary features.
 </p><p>
@@ -2249,11 +2334,11 @@ This is the optional re-ranking phase performed on the top-ranking hits from the
 For example Machine Learned Ranking (MLR) models.
 
 By default, no second-phase ranking is performed.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 second-phase {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 The body of a secondphase-ranking statement consists of:
 <table class="table">
 <thead>
@@ -2315,11 +2400,11 @@ or (if specified) second-phase ranking expression.
 Typically used for computing large ONNX models, which would be expensive to compute on all content nodes.
 
 By default, no global-phase ranking is performed.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 global-phase {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 The body of a global-phase ranking statement consists of:
 <table class="table">
 <thead>
@@ -2416,16 +2501,16 @@ sort-features {
 are <strong>re-calculated</strong> during the <em>fill protocol phase</em>
 for the hits which made it into the global top ranking hits (from all nodes).
 See <a href='#match-features'>match-features</a> for an alternative." %}
-<pre>
-summary-features: [feature] [feature]&hellip;
-</pre>
+<pre>{% highlight vespa-schema-language %}
+summary-features: [feature] [feature]…
+{% endhighlight %}</pre>
 <p>or</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 summary-features [inherits parent-profile (, other-parent-profile)* ]? {
     [feature]
     [feature]
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
 Any number of rank features separated by space can be listed on each line.
 {% include note.html content="Note that compound expressions must be wrapped in a <a href='https://docs.vespa.ai/en/ranking-expressions-features.html#accessing-feature-function-values-in-results'>function</a> to be accessible by match/summary-features. "%}
@@ -2457,16 +2542,16 @@ Any number of rank features separated by space can be listed on each line.
   <a href="../../ranking/ranking-expressions-features.html#accessing-feature-function-values-in-results">
     feature values in results</a>.
 </p>
-<pre>
-match-features: [feature] [feature]&hellip;
-</pre>
+<pre>{% highlight vespa-schema-language %}
+match-features: [feature] [feature]…
+{% endhighlight %}</pre>
 <p>or</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 match-features [inherits parent-profile (, other-parent-profile)* ]? {
     [feature]
     [feature]
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
 Any number of ranking features separated by space can be listed on each line.
 {% include note.html content="Note that compound expressions must be wrapped in a <a href='https://docs.vespa.ai/en/ranking-expressions-features.html#accessing-feature-function-values-in-results'>function</a> to be accessible by match/summary-features. "%}
@@ -2480,11 +2565,11 @@ Contained in <a href="#rank-profile">rank-profile</a>.
 Specifies mutating operations you can do to each of the documents that make it through the 4 query phases,
 <em>on-match</em>, <em>on-first-phase</em>, <em>on-second-phase</em> and <em>on-summary</em>.
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 mutate {
     [phase name] { [attribute name] [operation] [numeric_value] }
 }
-</pre>
+{% endhighlight %}</pre>
 The phases are:
 <table class="table">
 <thead>
@@ -2552,11 +2637,11 @@ See <a href="#constants">constants</a>.</i>
 This defines a named constant tensor located in a file with a given type
 that can be used in ranking expressions using the rank feature
 <a href="../ranking/rank-features.html#constant(name)">constant(name)</a>:
-<pre>
+<pre>{% highlight vespa-schema-language %}
 constant [name] {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 The body of a constant must contain:
 <table class="table">
 <thead>
@@ -2579,21 +2664,21 @@ The body of a constant must contain:
 </tbody>
 </table>
 Constant tensor example:
-<pre>
+<pre>{% highlight vespa-schema-language %}
 constant my_constant_tensor {
     file: constants/my_constant_tensor_file.json
-    type: tensor&lt;float&gt;(x{},y{})
+    type: tensor<float>(x{},y{})
 }
-</pre>
+{% endhighlight %}</pre>
 This example has a constant tensor with two mapped dimensions, <code>x</code> and <code>y</code>:
-<pre>
+<pre>{% highlight json %}
 {
     "cells": [
         { "address": { "x": "a", "y": "b"}, "value": 2.0 },
         { "address": { "x": "c", "y": "d"}, "value": 3.0 }
     ]
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
 When an application with tensor constants is deployed,
 the files are distributed to the content nodes
@@ -2621,11 +2706,11 @@ that can be used in ranking expressions using the "onnx" rank feature.</p>
 <p>Prefer to define onnx models in the rank profiles using them.
 Onnx models are inherited from parent profiles and from the schema.</p>
 
-<pre>
+<pre>{% highlight vespa-schema-language %}
 onnx-model [name] {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 
 <p>
 The body of an ONNX model must contain:
@@ -2725,11 +2810,11 @@ Contained in <a href="#schema">schema</a>.
 An explicitly defined document summary. By default, a document summary
 named <code>default</code> is created.  Using this element, other document
 summaries containing a different set of fields can be created.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 document-summary [name] inherits [document-summary1], [document-summary2], ... {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   The <code>inherits</code> attribute is optional.
   If defined, it contains the name of other document summaries in the same schema (or a parent)
@@ -2794,9 +2879,9 @@ Making the document IDs an attribute allows to return <a href="../../schemas/doc
 and to visit Document IDs without disk access, cf.
 <a href="../../operations/data-management.html#export-documents">Export documents</a>.
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 documentid: [setting]
-</pre>
+{% endhighlight %}</pre>
 The settings are:
 <table class="table">
 <thead>
@@ -2816,9 +2901,9 @@ Contained in <a href="#field">field</a>,
 Sets how to stem a field or an index, or how to stem by default. Typically used
 with <a href="../../linguistics/linguistics-opennlp.html">OpenNLP linguistics</a>.
 Read more on <a href="../../linguistics/linguistics-opennlp.html#stemming">stemming</a>.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 stemming: [stemming-type]
-</pre>
+{% endhighlight %}</pre>
 The stemming types are:
 <table class="table">
 <thead>
@@ -2840,9 +2925,9 @@ all fields should use the same stemming type."%}
 <p>Contained in <a href="#field">field</a>.
 Sets <a href="../../linguistics/linguistics-opennlp.html#normalization">normalizing</a> to be done on this field.
 The default is to normalize.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 normalizing: [normalizing-type]
-</pre>
+{% endhighlight %}</pre>
 <table class="table">
 <thead>
 <tr><th>Type</th><th>Description</th></tr>
@@ -2904,26 +2989,59 @@ normalizing: [normalizing-type]
     <li>You <strong>must</strong> include <code>cased</code> in the dictionary block</li>
 </ul>
 
-<pre>
+<pre>{% highlight vespa-schema-language %}
 dictionary {
-  hash    <!-- Specifies hash dictionary type -->
-  cased   <!-- Required with hash for string fields -->
+  hash    # Specifies hash dictionary type
+  cased   # Required with hash for string fields
 }
-</pre>
+{% endhighlight %}</pre>
 
 <h3>Example: Case-Sensitive Hash Dictionary</h3>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 field id_str type string {
       indexing:   summary | attribute
-      attribute:  fast-search  <!-- Enables dictionary functionality -->
-      match:      cased        <!-- Required for hash dictionaries with strings -->
+      attribute:  fast-search  # Enables dictionary functionality
+      match:      cased        # Required for hash dictionaries with strings
       rank:       filter
       dictionary {
-        hash                   <!-- Use hash dictionary type -->
-        cased                  <!-- Required for hash dictionaries with strings -->
+        hash                   # Use hash dictionary type
+        cased                  # Required for hash dictionaries with strings
       }
 }
-</pre>
+{% endhighlight %}</pre>
+
+
+
+<h2 id="explanation-field">explanation (on field)</h2>
+
+<p>Contained in <a href="#field">field</a> and provides an explanation of this field for agents.
+The explanation will be included in the skill explaining to agents how to query this data,
+see <a href="../../rag/agent-ready-schemas">agent-ready schemas</a>.</p>
+
+<pre>{% highlight vespa-schema-language %}
+explanation {
+  This can be used to ...
+}
+{% endhighlight %}</pre>
+
+or single line:
+
+<pre>{% highlight vespa-schema-language %}
+explanation: This can be used to ...
+{% endhighlight %}</pre>
+
+<p>Explanations are not inherited.</p>
+
+<p>This information is included automatically and does not need to be repeated in the explanation:</p>
+
+<ul>
+  <li>the type of the field</li>
+  <li>whether the field is an attribute and/or index</li>
+  <li>the match mode of the field</li>
+  <li>the embedding command to use when matching this field (<code>embed(model-id, ...)</code>), if the field's
+  embedding is produced by its indexing script (using the <code>embed</code> function).</li>
+</ul>
+
 
 
 
@@ -2931,17 +3049,17 @@ field id_str type string {
 <p>Contained in <a href="#field">field</a> or
 <a href="#struct-field">struct-field</a>.
 Specifies a property of an index structure attribute:
-<pre>
+<pre>{% highlight vespa-schema-language %}
 attribute [attribute-name]: [property]
-</pre>
+{% endhighlight %}</pre>
 or
-<pre>
+<pre>{% highlight vespa-schema-language %}
 attribute [attribute-name] {
     [property]
     [property]
-    &hellip;
+    …
 }
-</pre>
+{% endhighlight %}</pre>
 Read the <a href="../../content/attributes.html">introduction to attributes</a>.
 If the attribute name is specified, it will be used instead of the field name as the name of the attribute.
 {% include deprecated.html content="Deprecated, use a field with the wanted name outside the document instead."%}
@@ -3006,22 +3124,21 @@ Both <em>index</em> and <em>attribute</em> can be set on a field.
 </p>
 
 
-
 <h2 id="sorting">sorting</h2>
 <p>
 Contained in <a href="#attribute">attribute</a> or
 <a href="#field">field</a>.
 Specifies how sorting should be done.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 sorting : [property]
-</pre>
+{% endhighlight %}</pre>
 or
-<pre>
+<pre>{% highlight vespa-schema-language %}
 sorting {
     [property]
-    &hellip;
+    …
 }
-</pre>
+{% endhighlight %}</pre>
 <table class="table">
   <thead>
     <tr><th>Property</th><th>Description</th></tr>
@@ -3090,9 +3207,9 @@ the content nodes must be restarted to rebuild the HNSW index - see
   <a href="../ranking/rank-features.html#closeness(dimension,name)">closeness</a> ranking features.
 </p>
 <p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 distance-metric: [metric]
-</pre>
+{% endhighlight %}</pre>
 These are the available metrics; the expressions given for <em>distance</em> and <em>closeness</em>
 assume a query vector <em>qv = [x0, x1, ...]</em> and an attribute vector <em>av = [y0, y1, ...]</em>
 with same dimension of size <em>n</em> for all vectors.
@@ -3272,11 +3389,11 @@ with same dimension of size <em>n</em> for all vectors.
   <a href="../ranking/ranking-expressions.html#euclidean-distance-t">
   Euclidean_distance helper function</a>:
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
     function mydistance() {
-        expression: euclidean_distance(attribute(myembedding), query(myqueryvector), mydim))
+        expression: euclidean_distance(attribute(myembedding), query(myqueryvector), mydim)
     }
-</pre>
+{% endhighlight %}</pre>
 
 
 <h3 id="angular">angular</h3>
@@ -3289,21 +3406,21 @@ with same dimension of size <em>n</em> for all vectors.
   To compute the angular distance directly in a ranking expression, use the
   <a href="../ranking/ranking-expressions.html#cosine-similarity-t">
   cosine_similarity helper function</a>:
-<pre>
+<pre>{% highlight vespa-schema-language %}
     function angle() {
         expression: acos(cosine_similarity(attribute(myembedding), query(myqueryvector), mydim))
     }
-</pre>
+{% endhighlight %}</pre>
   Conversely, the cosine similarity can be recovered from the
   <a href="../ranking/rank-features.html#distance(dimension,name)">distance rank-feature</a>
   when using a nearestNeighbor query operator:
-<pre>
+<pre>{% highlight vespa-schema-language %}
     rank-profile cosine {
         first-phase {
             expression: cos(distance(field, myembedding))
         }
     }
-</pre>
+{% endhighlight %}</pre>
   If possible, it's slightly better for performance to normalize both query and document vectors to the same
   L2 norm and use the <code>prenormalized-angular</code> metric instead; but note that returned
   distance and closeness will be different.
@@ -3383,7 +3500,7 @@ with same dimension of size <em>n</em> for all vectors.
   1.0 for a right angle, and 2.0 for vectors with exactly opposite directions.
   Getting the cosine score (or angle) is therefore easy:
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
     rank-profile cosine {
         first-phase {
           expression: 1.0 - distance(field, embedding)
@@ -3392,17 +3509,17 @@ with same dimension of size <em>n</em> for all vectors.
           expression: acos(1.0 - distance(field, embedding))
         }
     }
-</pre>
+{% endhighlight %}</pre>
   To compute the cosine similarity directly in a ranking expression
   instead of fetching one already computed in a nearestNeighbor query
   operator, use the
   <a href="../ranking/ranking-expressions.html#cosine-similarity-t">
   cosine_similarity helper function</a>:
-<pre>
+<pre>{% highlight vespa-schema-language %}
     function mysimilarity() {
-        expression: cosine_similarity(attribute(myembedding), query(myqueryvector), mydim))
+        expression: cosine_similarity(attribute(myembedding), query(myqueryvector), mydim)
     }
-</pre>
+{% endhighlight %}</pre>
 
 
 <h3 id="geodegrees">geodegrees</h3>
@@ -3490,6 +3607,90 @@ bolding: on
 </p>
 
 
+<h2 id="fast-search-map-field">fast-search-map-field</h2>
+<p>Available since {% include version.html version="8.773.18" %}.</p>
+<p>Contained in <a href="#field">field</a> of type <a href="#map">map</a> or <a href="#array">array&lt;struct&gt;</a>.
+Creates a synthetic, map-like fast-search attribute from the field that allows for faster lookups
+than the containing field does via <a href="/en/reference/querying/yql.html#sameelement">sameElement</a>.
+</p>
+
+<p>
+    If the containing field is of type <a href="#map">map</a>, only the name of the synthetic field to be created has to be specified:
+<pre>{% highlight vespa-schema-language %}
+fast-search-map-field [synthetic-field-name]
+{% endhighlight %}</pre>
+
+    If the containing field is of type <a href="#array">array&lt;struct&gt;</a>,
+    one additionally has to specify which fields of the struct to use as key and value:
+<pre>{% highlight vespa-schema-language %}
+fast-search-map-field [synthetic-field-name] {
+    key: [struct-field-name-to-use-as-key]
+    value: [struct-field-name-to-use-as-value]
+}
+{% endhighlight %}</pre>
+    In both cases, the full name for the synthetic field is <code>[containing-field-name].[synthetic-field-name]</code>.
+</p>
+
+<p>
+    Example:
+<pre>{% highlight vespa-schema-language %}
+field my_map type map<string,string> {
+    indexing: summary
+    fast-search-map-field my_lookup
+}
+
+struct string_pair {
+    field my_key type string { }
+    field my_value type string { }
+}
+field my_array type array<string_pair> {
+    indexing: summary
+    fast-search-map-field my_lookup {
+        key: my_key
+        value: my_value
+    }
+}
+{% endhighlight %}</pre>
+    The names of the synthetic fields are <code>my_array.my_lookup</code> and <code>my_map.my_lookup</code>.
+</p>
+
+<p>
+    {% include important.html content="
+    The only way to search these fields is via the <a href='/en/reference/querying/yql.html#mapmatch'>mapMatch</a> operator.
+    "%}
+</p>
+
+<p>
+    The types that are supported for the key are int, long, and string.
+    The types that are supported for the value are int, long, float, double, and string.
+</p>
+
+<p>
+    Adding a fast-search map field to a field disables some types of <a href="/en/writing/partial-updates.html">partial updates</a>
+    for that field:
+</p>
+<ul>
+    <li>For a <a href="#map">map</a>: assigning or removing a single key using a
+        <a href="/en/reference/schemas/document-json-format.html#fieldpath">fieldpath</a>, like <code>my_map{my_key}</code>.</li>
+    <li>For an <a href="#array">array&lt;struct&gt;</a>: updating or removing a single element.
+        Adding elements is supported.</li>
+</ul>
+<p>
+    To change existing entries, assign the whole field.
+</p>
+
+<p>
+Adding a map-like field this way requires re-indexing before the field can be searched, see <a href="#add-a-fast-search-map-field">add a fast-search map field</a>.
+</p>
+<table class="table">
+<thead>
+<tr><th style="width:150px">Property</th><th>Description</th></tr>
+</thead><tbody>
+<tr><td>key</td><td>Which field of the struct to use as the keys of the map. Defaults to <code>key</code> if the containing field is of type map.</td></tr>
+<tr><td>value</td><td>Which fields of the struct to use as the values of the map. Defaults to <code>value</code> if the containing field is of type map.</td></tr>
+</tbody>
+</table>
+
 
 <h2 id="id">id</h2>
 <p>
@@ -3499,9 +3700,9 @@ All fields have a document-internal ID internally for transfer and storage.
 IDs are usually determined programmatically as a 31-bit number.
 Some storage and transfer space can be saved by instead explicitly setting IDs to a 7-bit number.
 <!-- ToDo: check if this applies to proton -->
-<pre>
+<pre>{% highlight vespa-schema-language %}
 id: [positive integer]
-</pre>
+{% endhighlight %}</pre>
 <p>An ID must satisfy these requirements:</p>
 <ul>
 <li>Must be a positive integer</li>
@@ -3528,17 +3729,17 @@ Sets index parameters.
   The index is built after a <a href="#changes-that-require-restart-but-not-re-feed">content node restart</a> (automated on Vespa Cloud).
 </p>
 <p>Examples:</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 index [index-name]: [property]
-</pre>
+{% endhighlight %}</pre>
 or
-<pre>
+<pre>{% highlight vespa-schema-language %}
 index [index-name] {
     [property]
     [property]
-    &hellip;
+    …
 }
-</pre>
+{% endhighlight %}</pre>
 
 {% include deprecated.html content='
 If <code>index-name</code> is specified, it will be used instead of the field name as the name of the index.
@@ -3633,13 +3834,13 @@ Hierarchical Navigable Small World (HNSW) graphs algorithm (<a href="https://arx
 HNSW indexes are not supported in
 <a href="../../performance/streaming-search.html#differences-in-streaming-search">streaming search</a>.
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 hnsw {
     [parameter]: [value]
     [parameter]: [value]
     ...
 }
-</pre>
+{% endhighlight %}</pre>
 <p>The following parameters are used when building the index graph:</p>
 <table class="table">
 <thead>
@@ -3666,8 +3867,8 @@ hnsw {
 <p>
   The <a href="#distance-metric">distance metric</a> specified on the <em>attribute</em>
   is used when building and searching the graph. Example:
-<pre>
-field text_embedding type tensor&lt;float&gt;(x[384]) {
+<pre>{% highlight vespa-schema-language %}
+field text_embedding type tensor<float>(x[384]) {
     indexing: summary | attribute | index
     attribute {
         distance-metric: prenormalized-angular
@@ -3679,7 +3880,7 @@ field text_embedding type tensor&lt;float&gt;(x[384]) {
         }
     }
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
 See
 <a href="../../querying/approximate-nn-hnsw">Approximate Nearest Neighbor Search using HNSW Index</a>
@@ -3700,17 +3901,17 @@ semantics similar to Unix shell commands. The value of the field
 enters the pipeline during indexing, and the pipeline puts the value
 into the desired index structures, possibly doing transformations and
 pulling in other values along the way.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 indexing: [index-statement]
-</pre>
+{% endhighlight %}</pre>
 or
-<pre>
+<pre>{% highlight vespa-schema-language %}
 indexing {
     [indexing-statement];
     [indexing-statement];
-    &hellip;
+    …
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
 If the field containing this is defined outside the document, it
 must start with an indexing statement which
@@ -3770,15 +3971,99 @@ So searches in this field will not search the contents in the <a href="#attribut
 
 
 <h2 id="linguistics">linguistics</h2>
-<p>Sets a linguistics 'profile' deciding how content and searches against this field should be linguistically processed.
-The profile value is propagated to the <a href="../../linguistics/linguistics.html">linguistics component</a>
-which can be configured to do profile-specific processing.</p>
+<p>Contained in <a href="#field">field</a>.
+Sets how the content of this field, and searches against it, should be linguistically processed.
+Read more in <a href="../../linguistics/linguistics.html#linguistics-profiles">linguistics profiles</a>.
+</p>
+<pre>{% highlight vespa-schema-language %}
+linguistics {
+    [setting]
+    [setting]
+    …
+}
+{% endhighlight %}</pre>
+<p>
+A setting given directly in the block applies both when indexing and when searching.
+To make a setting differ between the two, give it in an <code>index</code> and/or a <code>search</code> block,
+which takes precedence over the same setting given directly in the block for that side:
+</p>
+<pre>{% highlight vespa-schema-language %}
+linguistics {
+    index {
+        [setting]
+        …
+    }
+    search {
+        [setting]
+        …
+    }
+}
+{% endhighlight %}</pre>
+<table class="table">
+<thead>
+<tr><th>Setting</th><th>Description</th></tr>
+</thead><tbody>
+<tr><td>profile: [name]</td>
+<td><p>
+  Names a linguistics <em>profile</em> deciding how the text is processed.
+  The profile name is propagated to the <a href="../../linguistics/linguistics.html">linguistics component</a>,
+  which can be configured to do profile-specific processing.
+  There is no default: without a profile, the linguistics component processes the text as it does for
+  fields without a linguistics block.
+  </p><p>
+  Different profiles for indexing and searching can also be given in the older form
+  <code>profile { index: [name] search: [name] }</code>, in which the search profile defaults to the index profile.
+  This form cannot be combined with <code>profile:</code> directly in the block.
+</p></td>
+</tr>
+<tr><td>tokens: [tokens-type]</td>
+<td><p>
+  Decides which of the tokens the linguistics processing produces for each word are used,
+  see <a href="../../linguistics/linguistics.html#choosing-which-tokens-to-use">choosing which tokens to use</a>.
+  Each type is equivalent to a <a href="#stemming">stemming</a> type, and <code>tokens</code> takes precedence
+  over any stemming setting which applies to the field, whether in the field, the schema or an <a href="#index">index</a>.
+  Deployment warns when a stemming setting is overridden by a different value.
+  </p>
+  <table class="table">
+  <thead>
+  <tr><th>Type</th><th>Description</th></tr>
+  </thead><tbody>
+  <tr><td>original</td><td>Use the original word only. Equivalent to stemming: none</td></tr>
+  <tr><td>first-alternative</td><td>Use the one alternative the linguistics implementation considers best,
+  usually the first one produced. This is the default, equivalent to stemming: best</td></tr>
+  <tr><td>alternatives</td><td>Use all the alternatives produced for the word, but not the original word</td></tr>
+  <tr><td>original-and-alternatives</td><td>Use the original word and all the alternatives produced for it.
+  Equivalent to stemming: multiple</td></tr>
+  </tbody>
+  </table>
+  <p>
+  <code>tokens</code> only applies to string fields with <code>index</code> and <code>text</code> <a href="#match">matching</a>.
+  It is ignored, with a warning, for fields with <code>word</code>, <code>exact</code> or <code>gram</code> matching,
+  for uri fields and for fields of other types, as these produce a single token per word regardless.
+  Setting it for indexing or searching only makes the other side follow the stemming setting, which is warned about.
+</p></td>
+</tr>
+</tbody>
+</table>
+<p>Examples:</p>
 <pre>
 linguistics {
     profile: myIndexAndSearchProfile
+    tokens: original-and-alternatives
 }
 </pre>
-or
+<pre>
+linguistics {
+    index {
+        profile: myIndexProfile
+        tokens: original
+    }
+    search {
+        profile: mySearchProfile
+        tokens: original-and-alternatives
+    }
+}
+</pre>
 <pre>
 linguistics {
     profile {
@@ -3787,24 +4072,27 @@ linguistics {
     }
 }
 </pre>
-
+{% include note.html content="When combining multiple fields in a <a href='#fieldset'>fieldset</a>,
+all fields must use the same tokens when searching, whether that follows from <code>tokens</code> or
+from <a href='#stemming'>stemming</a>. A fieldset where they differ, and at least one field sets
+<code>tokens</code>, fails deployment."%}
 
 
 <h2 id="match">match</h2>
 <p>Contained in <a href="#field">field</a>, <a href="#fieldset">fieldset</a> or
 <a href="#struct-field">struct-field</a>.
 Sets the matching method to use for this field to something other than the default token matching.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 match: [property]
-</pre>
+{% endhighlight %}</pre>
 or
-<pre>
+<pre>{% highlight vespa-schema-language %}
 match {
     [property]
     [property]
-    &hellip;
+    …
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
 Whether the match type is <code>text</code>, <code>word</code> or <code>exact</code>,
 all term matching will be done after <a href="../../linguistics/linguistics-opennlp.html#normalization">normalization</a>
@@ -4034,15 +4322,15 @@ match {
 Set the kind of ranking calculations that will be done for the field. Even though the
 actual ranking expressions decide the ranking, this setting tells Vespa which preparatory calculations
 and which data structures are needed for the field.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 rank [field-name]: [ranking settings]
-</pre>
+{% endhighlight %}</pre>
 or
-<pre>
+<pre>{% highlight vespa-schema-language %}
 rank {
     [ranking setting]
 }
-</pre>
+{% endhighlight %}</pre>
 The field name should only be specified when used inside a rank-profile.
 The following ranking settings are supported in addition to the default:
 <table class="table">
@@ -4094,11 +4382,11 @@ The following ranking settings are supported in addition to the default:
     by allowing a per query combination of <a href="#filter">rank: filter</a> and <a href="#normal">rank: normal</a> behavior.
     See <a href="#filter-threshold">profile-level filter-threshold</a> for how to use the same value for all <em>index</em> fields.
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 rank [field-name] {
     filter-threshold: 0.05
 }
-</pre>
+{% endhighlight %}</pre>
 <table class="table">
     <thead>
     <tr><th>Setting</th><th>Description</th></tr>
@@ -4151,11 +4439,11 @@ rank [field-name] {
   the <a href="/en/reference/querying/yql.html#near">near</a> query operator
   and the <a href="/en/reference/querying/yql.html#onear">onear</a> query operator.
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 rank [field-name] {
     element-gap: 0
 }
-</pre>
+{% endhighlight %}</pre>
 <p>No restart or reindexing is required when changing this setting, it is immediately effective.</p>
 
 
@@ -4165,9 +4453,9 @@ rank [field-name] {
 <a href="#struct-field">struct-field</a>.
 Specifies a function to be performed on query terms to the indexes of this field when searching.
 The Search Container server has support for writing Vespa Searcher plugins that process these commands.</p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 query-command: [an identifier or quoted string]
-</pre>
+{% endhighlight %}</pre>
 
 <p>If you write a plugin searcher that needs some index-specific
 configuration parameter, that parameter can be set here.</p>
@@ -4183,9 +4471,9 @@ set to 1.</p>
 href="#field">field</a> or
 <a href="#rank-profile">rank-profile</a>.
 Selects the low-level rank settings to be used for this field when using <code>nativeRank</code>.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 rank-type [field-name]: [rank-type-name]
-</pre>
+{% endhighlight %}</pre>
 The field name can be skipped inside fields. Defined rank types are:
 <table class="table">
   <thead>
@@ -4239,11 +4527,11 @@ The field name can be skipped inside fields. Defined rank types are:
   statistics present in the document corpus. This makes matching faster at the cost of potentially
   reduced recall.
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 weakand {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
   Note that all document frequency calculations are done using <em>content node-local</em> document
   statistics (i.e. <a href="../../ranking/significance#global-significance-model">global significance</a>
@@ -4366,9 +4654,9 @@ The body of a <code>weakand</code> statement consists of:
   <a href="#struct-field">struct-field</a>.
   Specifies the name of the document summaries that should contain this field.
 </p>
-<pre>
-summary-to: [summary-name], [summary-name], &hellip;
-</pre>
+<pre>{% highlight vespa-schema-language %}
+summary-to: [summary-name], [summary-name], …
+{% endhighlight %}</pre>
 <p>
 Fields with summary will always be part of the default summary regardless of this setting. Use explicit <a href="#document-summary">document-summary</a> instead.
 See also <a href="../../querying/document-summaries.html">document summaries</a>.
@@ -4381,15 +4669,15 @@ Contained in <a href="#field">field</a> or
 <a href="#document-summary">document-summary</a> or
 <a href="#struct-field">struct-field</a>.
 Declares a summary field.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 summary: [property]
-</pre>
+{% endhighlight %}</pre>
 or
-<pre>
+<pre>{% highlight vespa-schema-language %}
 summary [name] {
     [body]
 }
-</pre>
+{% endhighlight %}</pre>
 The summary <em>name</em> can be skipped if this is set inside a
 field. The name will then be the same as the name of the source
 field.
@@ -4430,9 +4718,9 @@ Only supported for <a href="#indexing-index">index</a> fields of type string or 
       If multiple fields are specified, the value will be taken from the first field if that has a value,
       from the second if the first one is empty, and so on.
     </p>
-<pre>
-source: [field-name], [field-name], &hellip;
-</pre>
+<pre>{% highlight vespa-schema-language %}
+source: [field-name], [field-name], …
+{% endhighlight %}</pre>
     <p>
       When this is not specified, the source field is assumed to be the field with the same name as the summary field.
     </p>
@@ -4446,9 +4734,9 @@ source: [field-name], [field-name], &hellip;
 <tr><td>to</td>
   <td>Zero to one</td>
   <td>Specifies the name of the document summaries that this should be included in.
-<pre>
-to: [document-summary-name], [document-summary-name], &hellip;
-</pre>
+<pre>{% highlight vespa-schema-language %}
+to: [document-summary-name], [document-summary-name], …
+{% endhighlight %}</pre>
   This can only be specified in fields, not in the explicit document
   summaries. When this is not specified, the field will go to the
   <code>default</code> document summary.</td>
@@ -4484,9 +4772,9 @@ to: [document-summary-name], [document-summary-name], &hellip;
     <a href="#array">array of primitive</a> or
     <a href="#array">array of struct</a> field are returned as part of document summary.
   </p>
-<pre>
-select-elements-by: &lt;summary-feature-name&gt;
-</pre>
+<pre>{% highlight vespa-yql %}
+select-elements-by: <summary-feature-name>
+{% endhighlight %}</pre>
   <p>
     The summary feature used must be a tensor with a single mapped
     dimension. An element will be returned if its id is a label along
@@ -4528,7 +4816,7 @@ This is mainly useful for <a href="../../querying/text-matching.html#tokens-exam
     inside an explicit <a href="#document-summary">document-summary</a> block.
     Selects struct sub-fields to include in this document summary:
     </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 document-summary mysmallsum {
   summary myarrayfield {
     struct-field: a
@@ -4538,7 +4826,7 @@ document-summary mysmallsum {
     struct-field: key, value.d
   }
 }
-</pre>
+{% endhighlight %}</pre>
     <p>
     If not specified all sub-fields will be included. For maps of structs the
     "key" field must be included, and at least one of the "value.[name]"
@@ -4560,9 +4848,9 @@ Contained in <a href="#field">field</a>.
 The weight of a field - the default is 100.
 The field weight is used when calculating the <a href="../../basics/ranking.html">rank scores</a>.
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 weight: [positive integer]
-</pre>
+{% endhighlight %}</pre>
 
 
 
@@ -4570,17 +4858,17 @@ weight: [positive integer]
 <p>
 Contained in <a href="#field">field</a> of type weightedset.
 Properties of a weighted set.
-<pre>
+<pre>{% highlight vespa-schema-language %}
 weightedset: [property]
-</pre>
+{% endhighlight %}</pre>
 or
-<pre>
+<pre>{% highlight vespa-schema-language %}
 weightedset {
     [property]
     [property]
-    &hellip;
+    …
 }
-</pre>
+{% endhighlight %}</pre>
 <table class="table">
   <thead>
   <tr><th>Property</th><th>Occurrence</th><th>Description</th></tr>
@@ -4591,15 +4879,15 @@ weightedset {
     but the key is currently not present, the command will be ignored by default.
     Set this to make keys to be created in this case instead.
     This is useful when the weight is used to represent the count of the key.
-<pre>
-field tag type weightedset&lt;string&gt; {
+<pre>{% highlight vespa-schema-language %}
+field tag type weightedset<string> {
     indexing: attribute | summary
     weightedset {
         create-if-nonexistent
         remove-if-zero
     }
 }
-</pre>
+{% endhighlight %}</pre>
   </td>
 </tr>
 <tr><td>remove-if-zero</td>
@@ -4631,16 +4919,16 @@ The imported field inherits all but the following properties from the parent fie
 Refer to <a href="../../schemas/parent-child.html">parent/child</a> for a complete example.
 Note that the imported field is put <span style="text-decoration: underline">outside</span> the document type:
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 schema myschema {
     document myschema {
-        field parentschema_ref type reference&lt;parentschema&gt; {
+        field parentschema_ref type reference<parentschema> {
             indexing: attribute
         }
     }
     import field parentschema_ref.name as parent_name {}
 }
-</pre>
+{% endhighlight %}</pre>
 <p>
 Extra restrictions apply for some of the field types:
 <table class="table">
@@ -4692,18 +4980,18 @@ input. For example, to create an integer attribute for a
 string containing a comma-separated list of integers in the document,
 do like this:
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 schema example {
     document example {
         field yearlist type string { # Comma-separated years
         }
     }
 
-    field year type array&lt;int&gt; { # Search field using the yearlist value
+    field year type array<int> { # Search field using the yearlist value
         indexing: input yearlist | split "," | attribute
     }
 }
-</pre>
+{% endhighlight %}</pre>
 
 
 
@@ -4768,16 +5056,16 @@ Changes:
       Add an existing field to summary or any number of summary classes,
       and remove an existing field from summary or any number of summary classes. Example:
     </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
     document-summary short-summary {
         summary artist {}
     }
-</pre>
+{% endhighlight %}</pre>
     <p>
       A change adding an <a href="../../content/attributes.html">attribute</a> field with a new name to a summary class
       using <a href="#source">source</a> does not require restart or re-feed:
     </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
     field artist type string {
             indexing: summary | attribute
     }
@@ -4787,7 +5075,7 @@ Changes:
             <span class="pre-hilite">source: artist</span>
         }
     }
-</pre>
+{% endhighlight %}</pre>
     <p>
       Also see <a href="#add-or-remove-a-new-non-attribute-document-field-from-document-summary">non-attribute</a>
       fields.
@@ -4886,21 +5174,21 @@ Changes:
 <p>
 Example: Given a content cluster <em>mycluster</em> with mode <em>index</em>:
 </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
 schema test {
     document test {
         field f1 type string { indexing: summary }
     }
 }
-</pre>
+{% endhighlight %}</pre>
 Then add field <code>f1</code> as an attribute:
-<pre>
+<pre>{% highlight vespa-schema-language %}
 schema test {
     document test {
         field f1 type string { indexing: attribute | summary }
     }
 }
-</pre>
+{% endhighlight %}</pre>
 The following is output from <code>vespa prepare</code> -
 which restart actions are needed:
 <pre>
@@ -4975,7 +5263,7 @@ reindexing is enabled and started automatically on deployment, and is controlled
             (without <a href="/en/content/attributes.html">attribute</a>)
             with a new name to a summary class using <a href="#source">source</a> requires re-index:
           </p>
-<pre>
+<pre>{% highlight vespa-schema-language %}
     field artist type string {
             indexing: summary | index
     }
@@ -4985,31 +5273,46 @@ reindexing is enabled and started automatically on deployment, and is controlled
             <span class="pre-hilite">source: artist</span>
         }
     }
-</pre>
+{% endhighlight %}</pre>
           <p>
             Also see <a href="#add-or-remove-an-existing-document-field-from-document-summary">attribute</a> fields.
           </p>
         </td>
       </tr>
 
+      <tr>
+        <th>Add a fast-search map field</th>
+        <td>
+          <p id="add-a-fast-search-map-field">
+            Adding a <a href="#fast-search-map-field">fast-search map field</a> to a <a href="#map">map</a> or <a href="#array">array</a> field is equivalent to adding a synthetic field outside the document and, thus, requires re-indexing to fill the new field:
+          </p>
+<pre>{% highlight vespa-schema-language %}
+field my_map type map<string,int> {
+    indexing: summary
+    <span class="pre-hilite">fast-search-map-field my_lookup</span>
+}
+{% endhighlight %}</pre>
+        </td>
+      </tr>
+
   </tbody>
 </table>
 Example: Given a content cluster <em>mycluster</em> with mode <em>index</em>:
-<pre>
+<pre>{% highlight vespa-schema-language %}
 schema test {
     document test {
         field f1 type string { indexing: summary }
     }
 }
-</pre>
+{% endhighlight %}</pre>
 Then add field <code>f1</code> as an index:
-<pre>
+<pre>{% highlight vespa-schema-language %}
 schema test {
     document test {
         field f1 type string { indexing: index | summary }
     }
 }
-</pre>
+{% endhighlight %}</pre>
 The following is output from <code>vespa prepare</code> -
 which reindex actions are needed:
 <pre>
@@ -5058,21 +5361,21 @@ Changes:
   </tbody>
 </table>
 Example: Given a content cluster <em>mycluster</em> with mode <em>index</em>:
-<pre>
+<pre>{% highlight vespa-schema-language %}
 schema test {
     document test {
         field f1 type string { indexing: summary }
     }
 }
-</pre>
+{% endhighlight %}</pre>
 Then change field <code>f1</code> to hold an int:
-<pre>
+<pre>{% highlight vespa-schema-language %}
 schema test {
     document test {
         field f1 type int { indexing: summary }
     }
 }
-</pre>
+{% endhighlight %}</pre>
 The following is output from <code>vespa prepare</code> -
 which re-feed actions are needed:
 <pre>

@@ -35,7 +35,7 @@ see [deploying remote models](../applications/deployment.html#deploying-remote-m
 To make the above model available for ranking, you define the model in the schema,
 and then you can refer to the model using the `onnx` (or `onnxModel`) ranking feature:
 
-```
+```vespa-schema-language
 schema my_schema {
 
     document my_document {
@@ -187,6 +187,7 @@ these models can then be downloaded and used in Vespa.
 
 Vespa defaults to `mean` pooling-strategy.
 Consult the model card for the pooling method used.
+Encoder models typically use `mean` or `cls`, while decoder-based embedding models typically use `last`.
 Note the url pattern above.
 The url must point to the actual file, not the model card.
 
@@ -300,7 +301,7 @@ estimated model evaluation time: 0.00227701 ms
 ```
 
 The corresponding input/output tensors should be defined as:
-```
+```vespa-schema-language
 document doc {
     ...
     field flowercategory type tensor<float>(d0[1],d1[3]) {
